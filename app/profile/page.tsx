@@ -1,0 +1,218 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useApp } from '@/context/AppContext';
+import { ItemCard } from '@/components/ItemCard';
+import { createClient } from '@/utils/supabase/client';
+
+export default function ProfilePage() {
+  const { user, setUser, posts, setPosts, saved, reviews, toast, setIsAuthModalOpen } = useApp();
+  const [activeTab, setActiveTab] = useState<'posts' | 'reviews' | 'saved' | 'settings'>('posts');
+
+  const supabase = createClient();
+
+  const myPosts = posts.filter((p) => p.mine || p.owner === user?.first);
+  const savedPosts = posts.filter((p) => saved.includes(p.id));
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Sign out warning:', err);
+    }
+    setUser(null);
+    toast('You have been signed out.');
+  };
+
+  const handleDeletePost = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    toast('Post removed from your listings.');
+  };
+
+  if (!user) {
+    return (
+      <main className="shell">
+        <div className="empty" style={{ margin: '40px auto', maxWidth: 500 }}>
+          <b>Sign in to view your profile</b>
+          <p>Join EXCHANGE to manage your posts, saved items, and community ratings.</p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginTop: 14 }}
+            onClick={() => setIsAuthModalOpen(true)}
+          >
+            Sign in or create account
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="shell">
+      {/* Profile Hero */}
+      <section className="profile-hero">
+        <img
+          className="avatar avatar-lg"
+          src={user.avatar}
+          alt={user.name}
+        />
+        <div className="profile-info">
+          <h1>{user.name}</h1>
+          <p>
+            ⌖ {user.locality}, {user.city} · Member since {user.joined}
+          </p>
+        </div>
+        <div className="profile-stats">
+          <div>
+            <b>★ {user.rating}</b>
+            <span>community rating</span>
+          </div>
+          <div>
+            <b>{user.exchanges}</b>
+            <span>successful exchanges</span>
+          </div>
+          <div>
+            <b>{myPosts.length}</b>
+            <span>active posts</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs */}
+      <div className="profile-tabs">
+        {[
+          ['posts', `Posts (${myPosts.length})`],
+          ['reviews', `Reviews (${reviews.length})`],
+          ['saved', `Saved (${savedPosts.length})`],
+          ['settings', 'Settings'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={activeTab === id ? 'active' : ''}
+            onClick={() => setActiveTab(id as any)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Posts Tab */}
+      {activeTab === 'posts' && (
+        <div>
+          {myPosts.length > 0 ? (
+            <div className="item-grid">
+              {myPosts.map((post) => (
+                <div key={post.id} style={{ position: 'relative' }}>
+                  <ItemCard post={post} />
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-small"
+                    style={{ position: 'absolute', bottom: 15, right: 15, zIndex: 10 }}
+                    onClick={() => handleDeletePost(post.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty">
+              <b>No items posted yet.</b>
+              <span>Have something you no longer need? Post it to exchange!</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <div className="request-list">
+          {reviews.map((r, i) => (
+            <article key={i} className="review">
+              <b>
+                {r.name} <span>{'★'.repeat(r.rating)}</span>
+              </b>
+              <p>{r.text}</p>
+              <small>{r.time}</small>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {/* Saved Tab */}
+      {activeTab === 'saved' && (
+        <div>
+          {savedPosts.length > 0 ? (
+            <div className="item-grid">
+              {savedPosts.map((post) => (
+                <ItemCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty">
+              <b>No saved items yet.</b>
+              <span>Click the heart on any post in explore to save it for later.</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <section className="settings">
+          <article className="settings-group">
+            <h3>Account</h3>
+            <p>{user.name}</p>
+            <p>{user.email || 'priya@example.com'}</p>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => toast('Profile details updated.')}
+            >
+              Edit profile →
+            </button>
+          </article>
+
+          <article className="settings-group">
+            <h3>Notifications</h3>
+            <p>Messages, exchange requests and activity are enabled.</p>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => toast('Notification preferences saved.')}
+            >
+              Manage notifications →
+            </button>
+          </article>
+
+          <article className="settings-group">
+            <h3>Privacy</h3>
+            <p>Your public posts show city and locality, never your full address.</p>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => toast('Privacy settings saved.')}
+            >
+              Manage privacy →
+            </button>
+          </article>
+
+          <article className="settings-group">
+            <h3>Session</h3>
+            <p>Connected to Supabase Authentication.</p>
+            <button
+              type="button"
+              className="btn btn-danger btn-small"
+              style={{ marginTop: 8 }}
+              onClick={handleSignOut}
+            >
+              Log out
+            </button>
+          </article>
+        </section>
+      )}
+    </main>
+  );
+}
