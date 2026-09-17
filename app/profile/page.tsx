@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { ItemCard } from '@/components/ItemCard';
 import { createClient } from '@/utils/supabase/client';
+import { LocationIcon, StarIcon } from '@/components/Icons';
 
 export default function ProfilePage() {
   const { user, setUser, posts, setPosts, saved, reviews, toast, setIsAuthModalOpen } = useApp();
@@ -59,13 +60,17 @@ export default function ProfilePage() {
         />
         <div className="profile-info">
           <h1>{user.name}</h1>
-          <p>
-            ⌖ {user.locality}, {user.city} · Member since {user.joined}
+          <p style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <LocationIcon size={14} color="var(--ink-soft)" />
+            <span>{user.locality}, {user.city} · Member since {user.joined}</span>
           </p>
         </div>
         <div className="profile-stats">
           <div>
-            <b>★ {user.rating}</b>
+            <b style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <StarIcon size={18} color="#f59e0b" />
+              <span>{user.rating}</span>
+            </b>
             <span>community rating</span>
           </div>
           <div>
@@ -131,8 +136,13 @@ export default function ProfilePage() {
         <div className="request-list">
           {reviews.map((r, i) => (
             <article key={i} className="review">
-              <b>
-                {r.name} <span>{'★'.repeat(r.rating)}</span>
+              <b style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>{r.name}</span>
+                <span style={{ display: 'inline-flex', gap: 2 }}>
+                  {Array.from({ length: r.rating }).map((_, idx) => (
+                    <StarIcon key={idx} size={14} color="#f59e0b" />
+                  ))}
+                </span>
               </b>
               <p>{r.text}</p>
               <small>{r.time}</small>

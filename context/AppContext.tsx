@@ -295,16 +295,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((p) => (p.id === id ? { ...p, status } : p))
     );
 
-    const emoji = status === 'accepted' ? '🤝' : status === 'completed' ? '✓' : '↔';
+    const statusIcon = status === 'accepted' ? 'accepted' : status === 'completed' ? 'completed' : 'declined';
     const text =
       status === 'accepted'
-        ? 'Exchange agreed 🤝'
+        ? 'Exchange agreed. Chat with member to coordinate meetup.'
         : status === 'completed'
         ? 'Exchange completed — thank you for confirming!'
         : 'Proposal declined.';
 
     setNotifications((prev) => [
-      { id: Date.now(), icon: emoji, text, time: 'Just now', unread: true },
+      { id: Date.now(), icon: statusIcon, text, time: 'Just now', unread: true },
       ...prev,
     ]);
     toast(text);

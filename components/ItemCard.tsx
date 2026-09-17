@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types/exchange';
 import { useApp } from '@/context/AppContext';
+import { HeartIcon, LocationIcon, ExchangeIcon } from '@/components/Icons';
 
 interface ItemCardProps {
   post: Post;
@@ -51,8 +52,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
             toggleSave(post.id);
           }}
           aria-label={isSaved ? 'Remove from saved' : 'Save post'}
+          style={{ display: 'grid', placeItems: 'center' }}
         >
-          {isSaved ? '♥' : '♡'}
+          <HeartIcon size={16} filled={isSaved} color={isSaved ? '#e04848' : '#1b3b33'} />
         </button>
         <span className="condition-chip">{post.condition}</span>
       </Link>
@@ -64,16 +66,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
           </Link>
         </div>
 
-        <div className="item-location">
-          ⌖ {post.locality ? `${post.locality}, ${post.city}` : post.city}
+        <div className="item-location" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <LocationIcon size={12} color="var(--ink-soft)" />
+          <span>{post.locality ? `${post.locality}, ${post.city}` : post.city}</span>
         </div>
 
         <div className="item-owner">
           {post.owner} · {post.time}
         </div>
 
-        <div className="exchange-label">
-          ↔ Open to exchange
+        <div className="exchange-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <ExchangeIcon size={13} color="var(--pine)" />
+          <span>Open to exchange</span>
         </div>
 
         <div className="item-actions">

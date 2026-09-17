@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { PlusIcon, ShieldIcon, DocumentIcon } from '@/components/Icons';
 
 interface FooterProps {
   onOpenSafety: () => void;
@@ -39,9 +40,10 @@ export const Footer: React.FC<FooterProps> = ({
               <button
                 type="button"
                 onClick={onOpenCreate}
-                style={{ background: 'none', border: 0, padding: 0, color: 'var(--leaf)', fontWeight: 700 }}
+                style={{ background: 'none', border: 0, padding: 0, color: 'var(--leaf)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
               >
-                ＋ Post an item now
+                <PlusIcon size={14} color="var(--leaf)" />
+                <span>Post an item now</span>
               </button>
             </li>
             <li>
@@ -62,18 +64,20 @@ export const Footer: React.FC<FooterProps> = ({
               <button
                 type="button"
                 onClick={onOpenSafety}
-                style={{ background: 'none', border: 0, padding: 0, color: '#c1dcd0', textAlign: 'left' }}
+                style={{ background: 'none', border: 0, padding: 0, color: '#c1dcd0', textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
               >
-                🛡️ Safe Meetup Guidelines
+                <ShieldIcon size={15} color="var(--leaf)" />
+                <span>Safe Meetup Guidelines</span>
               </button>
             </li>
             <li>
               <button
                 type="button"
                 onClick={onOpenGuidelines}
-                style={{ background: 'none', border: 0, padding: 0, color: '#c1dcd0', textAlign: 'left' }}
+                style={{ background: 'none', border: 0, padding: 0, color: '#c1dcd0', textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
               >
-                📋 Prohibited Items Policy
+                <DocumentIcon size={15} color="var(--leaf)" />
+                <span>Prohibited Items Policy</span>
               </button>
             </li>
           </ul>

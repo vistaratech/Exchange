@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { media } from '@/utils/seedData';
+import { LocationIcon } from '@/components/Icons';
 
 function MessagesContent() {
   const searchParams = useSearchParams();
@@ -151,8 +152,9 @@ function MessagesContent() {
             <img className="avatar" src={activeChat.avatar} alt={activeChat.name} />
             <div>
               <b>{activeChat.name}</b>
-              <small>
-                ⌖ {activeChat.city} · discussing {activeChat.post}
+              <small style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <LocationIcon size={12} color="var(--ink-soft)" />
+                <span>{activeChat.city} · discussing {activeChat.post}</span>
               </small>
             </div>
             <button

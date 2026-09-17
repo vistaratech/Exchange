@@ -167,7 +167,7 @@ a { color: inherit; text-decoration: none; }
 .categories::-webkit-scrollbar { display: none; }
 .category { min-width: 120px; background: #fff; border: 1px solid var(--line); border-radius: 17px; padding: 14px 13px; text-align: left; color: var(--ink); transition: .16s ease; flex-shrink: 0; }
 .category:hover, .category.selected { border-color: var(--pine); background: #eff6e6; transform: translateY(-2px); }
-.category-icon { display: block; font-size: 23px; margin-bottom: 8px; font-style: normal; }
+.category-icon { display: flex; align-items: center; margin-bottom: 8px; font-style: normal; color: var(--pine); }
 .category span { font-size: 13px; font-weight: 700; white-space: nowrap; }
 
 .feed-layout { display: grid; grid-template-columns: 235px 1fr; gap: 27px; align-items: start; }

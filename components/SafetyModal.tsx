@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ShieldIcon, LocationIcon, BanIcon, SearchIcon, UsersGroupIcon } from '@/components/Icons';
 
 interface SafetyModalProps {
   isOpen: boolean;
@@ -22,16 +23,19 @@ export const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose }) => 
           ×
         </button>
 
-        <h2 id="safety-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>🛡️</span> Safe Exchange Guidelines
+        <h2 id="safety-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ShieldIcon size={22} color="var(--pine)" />
+          <span>Safe Exchange Guidelines</span>
         </h2>
         <p>
           EXCHANGE is built on community trust and mutual respect. Follow these essential tips to protect yourself during every in-person exchange:
         </p>
 
         <div style={{ display: 'grid', gap: 14, margin: '18px 0' }}>
-          <div style={{ display: 'flex', gap: 12, background: '#eff6e6', padding: 14, borderRadius: 14 }}>
-            <span style={{ fontSize: 22 }}>📍</span>
+          <div style={{ display: 'flex', gap: 14, background: '#eff6e6', padding: 14, borderRadius: 14, alignItems: 'flex-start' }}>
+            <div style={{ padding: 6, background: '#e1ecd6', borderRadius: 10, display: 'grid', placeItems: 'center' }}>
+              <LocationIcon size={20} color="var(--pine)" />
+            </div>
             <div>
               <b style={{ color: 'var(--pine)', fontSize: 14 }}>Meet in Busy Public Places</b>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-soft)' }}>
@@ -40,8 +44,10 @@ export const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose }) => 
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, background: '#eff6e6', padding: 14, borderRadius: 14 }}>
-            <span style={{ fontSize: 22 }}>🚫</span>
+          <div style={{ display: 'flex', gap: 14, background: '#eff6e6', padding: 14, borderRadius: 14, alignItems: 'flex-start' }}>
+            <div style={{ padding: 6, background: '#f8ded9', borderRadius: 10, display: 'grid', placeItems: 'center' }}>
+              <BanIcon size={20} color="#b4402d" />
+            </div>
             <div>
               <b style={{ color: 'var(--pine)', fontSize: 14 }}>Zero Money & No Shipping Scams</b>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-soft)' }}>
@@ -50,8 +56,10 @@ export const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose }) => 
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, background: '#eff6e6', padding: 14, borderRadius: 14 }}>
-            <span style={{ fontSize: 22 }}>🔍</span>
+          <div style={{ display: 'flex', gap: 14, background: '#eff6e6', padding: 14, borderRadius: 14, alignItems: 'flex-start' }}>
+            <div style={{ padding: 6, background: '#e1ecd6', borderRadius: 10, display: 'grid', placeItems: 'center' }}>
+              <SearchIcon size={20} color="var(--pine)" />
+            </div>
             <div>
               <b style={{ color: 'var(--pine)', fontSize: 14 }}>Inspect the Item Thoroughly</b>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-soft)' }}>
@@ -60,8 +68,10 @@ export const SafetyModal: React.FC<SafetyModalProps> = ({ isOpen, onClose }) => 
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, background: '#eff6e6', padding: 14, borderRadius: 14 }}>
-            <span style={{ fontSize: 22 }}>👥</span>
+          <div style={{ display: 'flex', gap: 14, background: '#eff6e6', padding: 14, borderRadius: 14, alignItems: 'flex-start' }}>
+            <div style={{ padding: 6, background: '#e1ecd6', borderRadius: 10, display: 'grid', placeItems: 'center' }}>
+              <UsersGroupIcon size={20} color="var(--pine)" />
+            </div>
             <div>
               <b style={{ color: 'var(--pine)', fontSize: 14 }}>Bring a Friend Along</b>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-soft)' }}>

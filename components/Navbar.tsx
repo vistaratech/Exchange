@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserProfile } from '@/types/exchange';
+import { SearchIcon, PlusIcon, HeartIcon, BellIcon } from '@/components/Icons';
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -49,7 +50,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         <label className="header-search">
-          <span>⌕</span>
+          <span>
+            <SearchIcon size={16} />
+          </span>
           <input
             placeholder="Search items…"
             value={search}
@@ -58,16 +61,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         </label>
 
         <div className="header-actions">
-          <button className="btn btn-primary btn-small" onClick={onOpenCreate}>
-            ＋ Post an item
+          <button className="btn btn-primary btn-small" onClick={onOpenCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <PlusIcon size={15} />
+            <span>Post an item</span>
           </button>
 
-          <Link href="/requests" className="icon-btn" aria-label="Saved posts">
-            ♡
+          <Link href="/requests" className="icon-btn" aria-label="Saved posts" title="Saved Posts">
+            <HeartIcon size={18} />
           </Link>
 
-          <Link href="/requests" className="icon-btn" aria-label="Notifications">
-            ♧
+          <Link href="/requests" className="icon-btn" aria-label="Notifications" title="Notifications">
+            <BellIcon size={18} />
             {unreadNotificationsCount > 0 && (
               <i className="badge">{unreadNotificationsCount}</i>
             )}

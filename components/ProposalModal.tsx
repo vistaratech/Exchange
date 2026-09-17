@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { ExchangeIcon } from '@/components/Icons';
 
 export const ProposalModal: React.FC = () => {
   const {
@@ -75,7 +76,9 @@ export const ProposalModal: React.FC = () => {
               <img src={offerPost.image} alt={offerPost.title} />
               <b>{offerPost.title}</b>
             </div>
-            <strong>↔</strong>
+            <strong style={{ display: 'grid', placeItems: 'center' }}>
+              <ExchangeIcon size={20} color="var(--pine)" />
+            </strong>
             <div>
               <small>You want</small>
               <img src={targetPost.image} alt={targetPost.title} />

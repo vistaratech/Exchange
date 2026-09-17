@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { ExchangeIcon } from '@/components/Icons';
 
 export default function RequestsPage() {
   const { proposals, posts, updateProposalStatus, addReview, user, setIsAuthModalOpen } = useApp();
@@ -105,7 +106,9 @@ export default function RequestsPage() {
                       {offerPost?.image && <img src={offerPost.image} alt="" />}
                       <span>{offerPost?.title || 'Offered item'}</span>
                     </div>
-                    <span className="arrow">↔</span>
+                    <span className="arrow" style={{ display: 'grid', placeItems: 'center' }}>
+                      <ExchangeIcon size={18} color="var(--pine)" />
+                    </span>
                     <div className="proposal-item">
                       {wantPost?.image && <img src={wantPost.image} alt="" />}
                       <span>{wantPost?.title || 'Requested item'}</span>
@@ -195,7 +198,7 @@ export default function RequestsPage() {
               >
                 {[5, 4, 3, 2, 1].map((x) => (
                   <option key={x} value={x}>
-                    {'★'.repeat(x)} {x} of 5
+                    {x} Stars ({x} of 5)
                   </option>
                 ))}
               </select>

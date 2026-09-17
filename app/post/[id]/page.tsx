@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { LocationIcon, ExchangeIcon, StarIcon } from '@/components/Icons';
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -95,8 +96,14 @@ export default function PostDetailPage() {
 
           <div className="meta">
             <span>{post.condition} condition</span>
-            <span>⌖ {post.locality ? `${post.locality}, ${post.city}` : post.city}</span>
-            <span>↔ Open to exchange</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <LocationIcon size={14} color="var(--ink-soft)" />
+              {post.locality ? `${post.locality}, ${post.city}` : post.city}
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <ExchangeIcon size={14} color="var(--pine)" />
+              Open to exchange
+            </span>
           </div>
 
           <div className="wanted">
@@ -131,7 +138,10 @@ export default function PostDetailPage() {
             />
             <div>
               <b>{post.owner}</b>
-              <span>★ {post.rating} · {post.exchanges} successful exchanges</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <StarIcon size={13} color="#f59e0b" />
+                <span>{post.rating} · {post.exchanges} successful exchanges</span>
+              </span>
             </div>
             <button
               type="button"

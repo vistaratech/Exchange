@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { DocumentIcon, BanIcon, CheckCircleIcon } from '@/components/Icons';
 
 interface GuidelinesModalProps {
   isOpen: boolean;
@@ -22,8 +23,9 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({ isOpen, onClos
           ×
         </button>
 
-        <h2 id="guidelines-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>📋</span> Community Rules & Prohibited Items
+        <h2 id="guidelines-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <DocumentIcon size={22} color="var(--pine)" />
+          <span>Community Rules & Prohibited Items</span>
         </h2>
         <p>
           To protect the community and ensure safe exchanges, the following items and behaviors are <strong>strictly forbidden</strong> on EXCHANGE:
@@ -31,7 +33,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({ isOpen, onClos
 
         <div style={{ display: 'grid', gap: 10, margin: '16px 0' }}>
           <div style={{ background: '#fff0ed', border: '1px solid #f9d2cb', borderRadius: 12, padding: 12 }}>
-            <b style={{ color: '#b4402d', fontSize: 13 }}>❌ Prohibited Items:</b>
+            <b style={{ color: '#b4402d', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <BanIcon size={16} color="#b4402d" />
+              <span>Prohibited Items:</span>
+            </b>
             <ul style={{ margin: '6px 0 0', paddingLeft: 20, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
               <li><strong>Currency & Cash:</strong> Currency notes, coins, crypto, loans, gift cards, or financial instruments.</li>
               <li><strong>Weapons & Fireworks:</strong> Firearms, knives, ammunition, explosives, pepper sprays.</li>
@@ -43,7 +48,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({ isOpen, onClos
           </div>
 
           <div style={{ background: '#eff6e6', border: '1px solid #d4e8c5', borderRadius: 12, padding: 12 }}>
-            <b style={{ color: 'var(--pine)', fontSize: 13 }}>✅ Welcome on EXCHANGE:</b>
+            <b style={{ color: 'var(--pine)', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <CheckCircleIcon size={16} color="var(--pine)" />
+              <span>Welcome on EXCHANGE:</span>
+            </b>
             <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
               Books, musical instruments, gadgets, computer accessories, clean furniture, sports gear, home decor, bicycles, photography equipment, and thoughtful items in working condition!
             </p>

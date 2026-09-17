@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { categories, media } from '@/utils/seedData';
+import { categories, media, initialUser } from '@/utils/seedData';
+import { LockIcon } from '@/components/Icons';
 import { ItemCondition, Post } from '@/types/exchange';
 import { createClient } from '@/utils/supabase/client';
 
@@ -138,7 +139,7 @@ export const CreatePostModal: React.FC = () => {
       };
 
       setPosts((prev) => [newPost, ...prev]);
-      toast('Your item is live on EXCHANGE! 🚀');
+      toast('Your item is live on EXCHANGE!');
       setIsCreateModalOpen(false);
 
       // Reset form
@@ -175,8 +176,9 @@ export const CreatePostModal: React.FC = () => {
 
         {!user && (
           <div style={{ background: '#fff0ed', border: '1px solid #f9d2cb', borderRadius: 12, padding: 12, marginBottom: 14 }}>
-            <p style={{ margin: 0, fontSize: 13, color: '#b4402d' }}>
-              ⚠️ You must be signed in to post. Click below to sign in or register:
+            <p style={{ margin: 0, fontSize: 13, color: '#b4402d', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <LockIcon size={16} color="#b4402d" />
+              <span>You must be signed in to post. Click below to sign in or register:</span>
             </p>
             <button
               type="button"

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { categories } from '@/utils/seedData';
 import { ItemCard } from '@/components/ItemCard';
+import { ShieldIcon, SearchIcon, PlusIcon, getCategoryIcon } from '@/components/Icons';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -99,14 +100,16 @@ function HomeContent() {
           type="button"
           className="btn btn-primary"
           onClick={() => setIsCreateModalOpen(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
-          ＋ Post an item
+          <PlusIcon size={16} />
+          <span>Post an item</span>
         </button>
       </section>
 
       {/* Mobile Search Bar */}
       <div className="mobile-search-bar">
-        <span>⌕</span>
+        <span><SearchIcon size={16} /></span>
         <input
           type="search"
           placeholder="Search items, categories, or cities…"
@@ -136,7 +139,7 @@ function HomeContent() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>🛡️</span>
+          <ShieldIcon size={22} color="var(--pine)" />
           <span style={{ fontSize: 13, color: 'var(--pine)', fontWeight: 600 }}>
             Public Safety: 100% No-Price Barter. Always meet in public daylight locations. Never send money or courier fees.
           </span>
@@ -183,7 +186,7 @@ function HomeContent() {
                 onClick={() => handleCategoryClick(name)}
                 aria-pressed={isSelected}
               >
-                <i className="category-icon">{icon}</i>
+                <i className="category-icon">{getCategoryIcon(name, 22)}</i>
                 <span>{name}</span>
               </button>
             );
@@ -310,8 +313,10 @@ function HomeContent() {
                     type="button"
                     className="btn btn-primary"
                     onClick={() => setIsCreateModalOpen(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
-                    ＋ Post an item now
+                    <PlusIcon size={16} />
+                    <span>Post an item now</span>
                   </button>
                   {(selectedCategory || selectedCity || search) && (
                     <button
