@@ -4,20 +4,45 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 
 export default function RequestsPage() {
-  const { proposals, posts, updateProposalStatus, addReview, user } = useApp();
+  const { proposals, posts, updateProposalStatus, addReview, user, setIsAuthModalOpen } = useApp();
   const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'accepted' | 'completed'>('received');
   const [reviewProposalId, setReviewProposalId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('Great person. Smooth exchange.');
 
-  const currentUserFirst = user?.first || 'Priya';
+  if (!user) {
+    return (
+      <main className="shell">
+        <div className="page-head">
+          <div>
+            <h1>Exchange requests</h1>
+            <p>Track incoming proposals, offers you've sent, and completed swaps.</p>
+          </div>
+        </div>
+        <div className="empty" style={{ margin: '40px auto', maxWidth: 500 }}>
+          <b>Sign in to view your requests</b>
+          <p>You must be signed in to send, receive, and manage your 1-for-1 item exchanges.</p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginTop: 14 }}
+            onClick={() => setIsAuthModalOpen(true)}
+          >
+            Sign in or Register
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const currentUserFirst = user.first || user.name.split(' ')[0];
 
   const filteredProposals = proposals.filter((p) => {
     if (activeTab === 'received') {
-      return p.receiver === currentUserFirst && p.status === 'pending';
+      return (p.receiver === currentUserFirst || p.receiver === user.name) && p.status === 'pending';
     }
     if (activeTab === 'sent') {
-      return p.sender === currentUserFirst && p.status === 'pending';
+      return (p.sender === currentUserFirst || p.sender === user.name) && p.status === 'pending';
     }
     if (activeTab === 'accepted') {
       return p.status === 'accepted';
@@ -25,7 +50,7 @@ export default function RequestsPage() {
     if (activeTab === 'completed') {
       return p.status === 'completed';
     }
-    return true;
+    return false;
   });
 
   const handleReviewSubmit = (e: React.FormEvent) => {
@@ -40,7 +65,7 @@ export default function RequestsPage() {
       <div className="page-head">
         <div>
           <h1>Exchange requests</h1>
-          <p>Every proposal stays simple: one thing for another thing.</p>
+          <p>Every proposal stays simple: one item for another item.</p>
         </div>
       </div>
 
@@ -60,9 +85,9 @@ export default function RequestsPage() {
       <div className="request-list">
         {filteredProposals.length > 0 ? (
           filteredProposals.map((p) => {
-            const offerPost = posts.find((item) => item.id === p.senderPost) || posts[0];
-            const wantPost = posts.find((item) => item.id === p.receiverPost) || posts[1];
-            const isReceived = p.receiver === currentUserFirst;
+            const offerPost = posts.find((item) => item.id === p.senderPost);
+            const wantPost = posts.find((item) => item.id === p.receiverPost);
+            const isReceived = p.receiver === currentUserFirst || p.receiver === user.name;
 
             return (
               <article key={p.id} className="request">
@@ -73,17 +98,17 @@ export default function RequestsPage() {
                       ? `${p.sender} wants your ${wantPost?.title || 'item'}`
                       : `Your proposal to ${p.receiver}`}
                   </h3>
-                  <p>“{p.message}”</p>
+                  {p.message && <p>“{p.message}”</p>}
 
                   <div className="proposal-items">
                     <div className="proposal-item">
-                      <img src={offerPost?.image} alt="" />
-                      <span>{offerPost?.title}</span>
+                      {offerPost?.image && <img src={offerPost.image} alt="" />}
+                      <span>{offerPost?.title || 'Offered item'}</span>
                     </div>
                     <span className="arrow">↔</span>
                     <div className="proposal-item">
-                      <img src={wantPost?.image} alt="" />
-                      <span>{wantPost?.title}</span>
+                      {wantPost?.image && <img src={wantPost.image} alt="" />}
+                      <span>{wantPost?.title || 'Requested item'}</span>
                     </div>
                   </div>
                 </div>
@@ -133,11 +158,15 @@ export default function RequestsPage() {
           })
         ) : (
           <div className="empty">
-            <b>Your exchange journey starts here.</b>
+            <b>No {activeTab} exchange requests.</b>
             <span>
               {activeTab === 'received'
                 ? 'When someone proposes an exchange for one of your items, it will appear here.'
-                : 'You have nothing in this section yet.'}
+                : activeTab === 'sent'
+                ? 'When you propose an exchange for another community member’s item, it will appear here.'
+                : activeTab === 'accepted'
+                ? 'Agreed exchanges ready for in-person meeting will appear here.'
+                : 'Completed exchanges will appear here.'}
             </span>
           </div>
         )}

@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { categories } from '@/utils/seedData';
 import { ItemCard } from '@/components/ItemCard';
 
-export default function HomePage() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const {
     posts,
     isLoadingPosts,
@@ -20,6 +22,14 @@ export default function HomePage() {
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [openToAny, setOpenToAny] = useState<boolean>(false);
 
+  // Read URL params if any
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
+
   const filteredPosts = posts.filter((p) => {
     if (p.status === 'archived' || p.status === 'removed') return false;
 
@@ -31,14 +41,37 @@ export default function HomePage() {
         .toLowerCase()
         .includes(q);
 
-    const matchCategory = !selectedCategory || p.category === selectedCategory;
-    const matchCity = !selectedCity || p.city === selectedCity;
-    const matchCondition = !selectedCondition || p.condition === selectedCondition;
+    const matchCategory =
+      !selectedCategory ||
+      p.category?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+
+    const matchCity =
+      !selectedCity || p.city?.trim().toLowerCase() === selectedCity.trim().toLowerCase();
+
+    const matchCondition =
+      !selectedCondition ||
+      p.condition?.trim().toLowerCase() === selectedCondition.trim().toLowerCase();
+
     const matchAny =
       !openToAny || /any|interesting|creative|surprise/i.test(p.wanted);
 
     return matchSearch && matchCategory && matchCity && matchCondition && matchAny;
   });
+
+  const handleCategoryClick = (name: string) => {
+    const nextCategory = selectedCategory.toLowerCase() === name.toLowerCase() ? '' : name;
+    setSelectedCategory(nextCategory);
+
+    // If user clicks a category, smoothly scroll to feed so they see the filtered list immediately
+    if (nextCategory) {
+      setTimeout(() => {
+        const feedEl = document.getElementById('feed');
+        if (feedEl) {
+          feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+    }
+  };
 
   const clearFilters = () => {
     setSearch('');
@@ -125,35 +158,41 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* Categories */}
-      <section className="section">
+      {/* Categories Section */}
+      <section className="section" id="categories">
         <div className="section-heading">
           <h2>Browse by category</h2>
           {selectedCategory && (
-            <button type="button" onClick={() => setSelectedCategory('')}>
-              Clear category ×
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('')}
+              style={{ color: 'var(--pine)', fontSize: 13 }}
+            >
+              Clear category ({selectedCategory}) ×
             </button>
           )}
         </div>
         <div className="categories">
-          {categories.map(([name, icon]) => (
-            <button
-              key={name}
-              type="button"
-              className={`category ${selectedCategory === name ? 'selected' : ''}`}
-              onClick={() =>
-                setSelectedCategory(selectedCategory === name ? '' : name)
-              }
-            >
-              <i className="category-icon">{icon}</i>
-              <span>{name}</span>
-            </button>
-          ))}
+          {categories.map(([name, icon]) => {
+            const isSelected = selectedCategory.toLowerCase() === name.toLowerCase();
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`category ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleCategoryClick(name)}
+                aria-pressed={isSelected}
+              >
+                <i className="category-icon">{icon}</i>
+                <span>{name}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
       {/* Main Feed with Filters */}
-      <section className="section">
+      <section className="section" id="feed">
         <div className="section-heading">
           <h2>
             {selectedCategory
@@ -258,7 +297,10 @@ export default function HomePage() {
               <div className="empty">
                 <b>Be the first to post an item!</b>
                 <p style={{ maxWidth: 440, margin: '8px auto 16px', fontSize: 14 }}>
-                  No one has posted in this category yet. Start the circular exchange community in your city by posting what you have!
+                  {selectedCategory
+                    ? `No items posted under ${selectedCategory} yet.`
+                    : 'No items matching your search.'}{' '}
+                  Start the circular exchange community in your city by posting what you have!
                 </p>
                 <div
                   className="inline-actions"
@@ -287,5 +329,13 @@ export default function HomePage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="empty" style={{ margin: '40px auto' }}>Loading feed…</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

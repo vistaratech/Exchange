@@ -52,10 +52,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState<boolean>(true);
   const [saved, setSaved] = useState<string[]>([]);
-  const [chats, setChats] = useState<Record<string, Conversation>>(initialChats);
-  const [proposals, setProposals] = useState<ExchangeProposal[]>(initialProposals);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
-  const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
+  const [chats, setChats] = useState<Record<string, Conversation>>({});
+  const [proposals, setProposals] = useState<ExchangeProposal[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [search, setSearch] = useState<string>('');
 
@@ -121,18 +121,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
+          const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Member';
           setUser({
             id: authUser.id,
-            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Member',
-            first: (authUser.user_metadata?.full_name || authUser.email || 'Member').split(' ')[0],
+            name: fullName,
+            first: fullName.split(' ')[0],
             city: authUser.user_metadata?.city || 'Chennai',
             locality: authUser.user_metadata?.locality || 'Central',
-            avatar: authUser.user_metadata?.avatar || initialUser.avatar,
+            avatar: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || authUser.user_metadata?.avatar || initialUser.avatar,
             joined: new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
             rating: '5.0',
             exchanges: 0,
             email: authUser.email,
           });
+
+          // Fetch real exchange proposals for this user
+          try {
+            const { data: propData } = await supabase
+              .from('exchange_proposals')
+              .select('*')
+              .or(`sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id}`)
+              .order('created_at', { ascending: false });
+
+            if (propData && propData.length > 0) {
+              setProposals(
+                propData.map((p: any) => ({
+                  id: p.id,
+                  sender: p.sender_name,
+                  receiver: p.receiver_name,
+                  senderPost: p.sender_post_id,
+                  receiverPost: p.receiver_post_id,
+                  message: p.message || '',
+                  status: p.status || 'pending',
+                  created: new Date(p.created_at).toLocaleDateString(),
+                }))
+              );
+            } else {
+              setProposals([]);
+            }
+          } catch (propErr) {
+            console.warn('Proposals fetch error:', propErr);
+            setProposals([]);
+          }
+        } else {
+          setProposals([]);
         }
       } catch (err) {
         console.warn('Supabase auth check:', err);
@@ -147,13 +179,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const u = session.user;
+        const fullName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member';
         setUser({
           id: u.id,
-          name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Member',
-          first: (u.user_metadata?.full_name || u.email || 'Member').split(' ')[0],
+          name: fullName,
+          first: fullName.split(' ')[0],
           city: u.user_metadata?.city || 'Chennai',
           locality: u.user_metadata?.locality || 'Central',
-          avatar: u.user_metadata?.avatar || initialUser.avatar,
+          avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || u.user_metadata?.avatar || initialUser.avatar,
           joined: 'Recently',
           rating: '5.0',
           exchanges: 0,
@@ -204,12 +237,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const createProposal = (targetPostId: string, offerPostId: string, message: string) => {
+  const createProposal = async (targetPostId: string, offerPostId: string, message: string) => {
     const targetPost = posts.find((p) => p.id === targetPostId);
     if (!targetPost) return;
 
+    let createdId = `x-${Date.now()}`;
+    try {
+      if (user?.id) {
+        const { data: propRow } = await supabase
+          .from('exchange_proposals')
+          .insert({
+            sender_id: user.id,
+            receiver_id: targetPost.user_id || null,
+            sender_name: user.first || user.name,
+            receiver_name: targetPost.owner,
+            sender_post_id: offerPostId,
+            receiver_post_id: targetPostId,
+            message,
+            status: 'pending',
+          })
+          .select()
+          .single();
+        if (propRow) createdId = propRow.id;
+      }
+    } catch (err) {
+      console.warn('Supabase proposal insert note:', err);
+    }
+
     const newProposal: ExchangeProposal = {
-      id: `x-${Date.now()}`,
+      id: createdId,
       sender: user?.first || 'You',
       receiver: targetPost.owner,
       senderPost: offerPostId,

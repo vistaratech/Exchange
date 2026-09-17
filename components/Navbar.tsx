@@ -37,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link href="/" className={pathname === '/' ? 'active' : ''}>
             Explore
           </Link>
-          <Link href="/?search=all" className={pathname === '/search' ? 'active' : ''}>
+          <Link href="/#categories">
             Categories
           </Link>
           <Link href="/messages" className={pathname === '/messages' ? 'active' : ''}>
@@ -45,9 +45,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </Link>
           <Link href="/requests" className={pathname === '/requests' ? 'active' : ''}>
             Requests
-          </Link>
-          <Link href="/admin" className={pathname === '/admin' ? 'active' : ''}>
-            Admin
           </Link>
         </nav>
 

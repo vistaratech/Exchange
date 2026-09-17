@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Navbar } from './Navbar';
 import { MobileNav } from './MobileNav';
@@ -26,6 +27,7 @@ export const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
   } = useApp();
 
   const unreadCount = notifications.filter((n) => n.unread).length;
+  const pathname = usePathname();
 
   return (
     <div className="app" id="app">
@@ -40,11 +42,13 @@ export const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
 
       {children}
 
-      <Footer
-        onOpenSafety={() => setIsSafetyModalOpen(true)}
-        onOpenGuidelines={() => setIsGuidelinesModalOpen(true)}
-        onOpenCreate={() => setIsCreateModalOpen(true)}
-      />
+      {pathname !== '/messages' && (
+        <Footer
+          onOpenSafety={() => setIsSafetyModalOpen(true)}
+          onOpenGuidelines={() => setIsGuidelinesModalOpen(true)}
+          onOpenCreate={() => setIsCreateModalOpen(true)}
+        />
+      )}
 
       <MobileNav onOpenCreate={() => setIsCreateModalOpen(true)} />
 

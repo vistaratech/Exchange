@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { media } from '@/utils/seedData';
 
 function MessagesContent() {
   const searchParams = useSearchParams();
-  const { chats, sendMessage, setProposalModalTargetId, posts } = useApp();
+  const { chats, sendMessage, setProposalModalTargetId, posts, user, setIsAuthModalOpen } = useApp();
 
   const chatKeys = Object.keys(chats);
-  const [activeChatId, setActiveChatId] = useState<string>(chatKeys[0] || 'arun');
+  const [activeChatId, setActiveChatId] = useState<string>(chatKeys[0] || '');
   const [inputText, setInputText] = useState('');
   const [showMobileList, setShowMobileList] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -38,13 +39,44 @@ function MessagesContent() {
       }
       setActiveChatId(key);
       setShowMobileList(false);
+    } else if (chatKeys.length > 0 && !activeChatId) {
+      setActiveChatId(chatKeys[0]);
     }
-  }, [searchParams, chats]);
+  }, [searchParams, chats, chatKeys.length, activeChatId]);
 
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chats, activeChatId]);
+
+  if (!user) {
+    return (
+      <div className="empty" style={{ margin: '40px auto', maxWidth: 500 }}>
+        <b>Sign in to view your messages</b>
+        <p>Chat directly with other community members about items and exchange proposals.</p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ marginTop: 14 }}
+          onClick={() => setIsAuthModalOpen(true)}
+        >
+          Sign in or Register
+        </button>
+      </div>
+    );
+  }
+
+  if (chatKeys.length === 0) {
+    return (
+      <div className="empty" style={{ margin: '40px auto', maxWidth: 500 }}>
+        <b>No messages yet</b>
+        <p>When you message someone about an item or receive a question, your conversations will appear here.</p>
+        <Link href="/" className="btn btn-primary" style={{ marginTop: 14 }}>
+          Browse fresh exchanges
+        </Link>
+      </div>
+    );
+  }
 
   const activeChat = chats[activeChatId] || chats[chatKeys[0]];
 
@@ -101,7 +133,7 @@ function MessagesContent() {
       </aside>
 
       {/* Chat window */}
-      {activeChat && (
+      {activeChat ? (
         <section
           className={`chat ${showMobileList ? 'mobile-hide' : ''}`}
           style={{ display: showMobileList ? 'none' : undefined }}
@@ -159,6 +191,10 @@ function MessagesContent() {
             </button>
           </form>
         </section>
+      ) : (
+        <div className="empty" style={{ margin: 'auto' }}>
+          Select a chat to start messaging
+        </div>
       )}
     </div>
   );
@@ -166,8 +202,8 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <main className="shell">
-      <Suspense fallback={<div className="empty">Loading conversations…</div>}>
+    <main className="messages-shell">
+      <Suspense fallback={<div className="empty" style={{ margin: '40px auto' }}>Loading conversations…</div>}>
         <MessagesContent />
       </Suspense>
     </main>

@@ -76,11 +76,6 @@ export const Footer: React.FC<FooterProps> = ({
                 📋 Prohibited Items Policy
               </button>
             </li>
-            <li>
-              <Link href="/admin" style={{ color: '#c1dcd0' }}>
-                ⚖️ Community Moderation
-              </Link>
-            </li>
           </ul>
         </div>
 
