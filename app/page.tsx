@@ -126,38 +126,42 @@ function HomeContent() {
       {/* Trust & Safety Advisory Banner */}
       <div
         style={{
-          background: '#eff6e6',
-          border: '1px solid #d4e8c5',
-          borderRadius: 16,
-          padding: '12px 18px',
+          background: 'linear-gradient(135deg, rgba(239,246,230,0.85), rgba(232,242,219,0.85))',
+          backdropFilter: 'blur(8px)',
+          border: '1.5px solid rgba(168,224,99,0.25)',
+          borderRadius: 18,
+          padding: '14px 20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 10,
-          margin: '20px 0',
+          gap: 12,
+          margin: '18px 0',
+          boxShadow: '0 2px 12px rgba(26,107,86,0.04)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <ShieldIcon size={22} color="var(--pine)" />
-          <span style={{ fontSize: 13, color: 'var(--pine)', fontWeight: 600 }}>
-            Public Safety: 100% No-Price Barter. Always meet in public daylight locations. Never send money or courier fees.
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(26,107,86,0.08)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <ShieldIcon size={18} color="var(--pine)" />
+          </div>
+          <span style={{ fontSize: 13, color: 'var(--pine-deep)', fontWeight: 600, lineHeight: 1.4 }}>
+            100% No-Price Barter · Always meet in public daylight · Never send money
           </span>
         </div>
         <button
           type="button"
           onClick={() => setIsSafetyModalOpen(true)}
+          className="btn btn-small"
           style={{
-            background: 'none',
-            border: 0,
+            background: 'rgba(26,107,86,0.08)',
             color: 'var(--pine)',
             fontWeight: 700,
             fontSize: 12,
-            cursor: 'pointer',
-            textDecoration: 'underline',
+            padding: '7px 14px',
+            border: '1px solid rgba(26,107,86,0.12)',
           }}
         >
-          Read Safety Rules →
+          Safety Rules →
         </button>
       </div>
 
