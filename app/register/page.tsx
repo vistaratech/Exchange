@@ -4,12 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { createClient } from '@/utils/supabase/client';
 import { initialUser } from '@/utils/seedData';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setUser, toast } = useApp();
+  const { setUser, toast, registerWithEmail, loginWithGoogle } = useApp();
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [email, setEmail] = useState('');
@@ -17,67 +16,45 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const supabase = createClient();
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
-      });
-      if (error) {
-        toast(error.message, 'error');
-        setGoogleLoading(false);
-      }
+      await loginWithGoogle();
+      router.push('/profile');
     } catch (err: any) {
-      toast(err.message || 'Google sign-in error', 'error');
+      console.error('Google sign in error:', err);
+      if (err?.code === 'auth/popup-closed-by-user') {
+        toast('Google sign in popup was closed.', 'error');
+      } else {
+        toast(err?.message || 'Google sign in failed.', 'error');
+      }
+    } finally {
       setGoogleLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password.length < 6) {
+      toast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name.trim(),
-            city: city.trim() || 'Chennai',
-          },
-        },
-      });
-
-      if (error) {
-        toast(error.message, 'error');
-        setLoading(false);
-        return;
-      }
-
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          name: name.trim() || email.split('@')[0],
-          first: (name.trim() || email).split(' ')[0],
-          city: city.trim() || 'Chennai',
-          locality: 'Central',
-          avatar: initialUser.avatar,
-          joined: 'Just now',
-          rating: '5.0',
-          exchanges: 0,
-          email,
-        });
-        toast('Account created successfully! Welcome to EXCHANGE.');
-        router.push('/profile');
-      }
+      await registerWithEmail(email, password, name, city);
+      router.push('/profile');
     } catch (err: any) {
-      toast(err.message || 'Registration error', 'error');
+      console.error('Registration error:', err);
+      let msg = err?.message || 'Failed to create account.';
+      if (err?.code === 'auth/email-already-in-use') {
+        msg = 'An account with this email already exists. Try signing in.';
+      } else if (err?.code === 'auth/weak-password') {
+        msg = 'Password is too weak. Please use at least 6 characters.';
+      }
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }

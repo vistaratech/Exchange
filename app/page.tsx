@@ -288,7 +288,7 @@ function HomeContent() {
             {isLoadingPosts ? (
               <div className="empty" style={{ padding: '60px 20px' }}>
                 <b>Loading community items…</b>
-                <span>Connecting to live Supabase exchange database.</span>
+                <span>Connecting to exchange feed.</span>
               </div>
             ) : filteredPosts.length > 0 ? (
               <div className="item-grid">

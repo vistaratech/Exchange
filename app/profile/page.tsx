@@ -3,31 +3,31 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { ItemCard } from '@/components/ItemCard';
-import { createClient } from '@/utils/supabase/client';
 import { LocationIcon, StarIcon } from '@/components/Icons';
 
 export default function ProfilePage() {
-  const { user, setUser, posts, setPosts, saved, reviews, toast, setIsAuthModalOpen } = useApp();
+  const {
+    user,
+    setUser,
+    posts,
+    saved,
+    reviews,
+    toast,
+    setIsAuthModalOpen,
+    signOut,
+    deletePost,
+  } = useApp();
   const [activeTab, setActiveTab] = useState<'posts' | 'reviews' | 'saved' | 'settings'>('posts');
 
-  const supabase = createClient();
-
-  const myPosts = posts.filter((p) => p.mine || p.owner === user?.first);
+  const myPosts = posts.filter((p) => p.mine || p.owner === user?.first || p.user_id === user?.id);
   const savedPosts = posts.filter((p) => saved.includes(p.id));
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('Sign out warning:', err);
-    }
-    setUser(null);
-    toast('You have been signed out.');
+    await signOut();
   };
 
-  const handleDeletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-    toast('Post removed from your listings.');
+  const handleDeletePost = async (postId: string) => {
+    await deletePost(postId);
   };
 
   if (!user) {
@@ -211,7 +211,7 @@ export default function ProfilePage() {
 
           <article className="settings-group">
             <h3>Session</h3>
-            <p>Connected to Supabase Authentication.</p>
+            <p>Active user session (Local mode).</p>
             <button
               type="button"
               className="btn btn-danger btn-small"

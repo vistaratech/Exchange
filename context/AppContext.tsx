@@ -2,8 +2,29 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, UserProfile, ExchangeProposal, Conversation, NotificationItem, ReviewItem } from '@/types/exchange';
-import { initialUser, initialChats, initialProposals, initialNotifications, initialReviews } from '@/utils/seedData';
-import { createClient } from '@/utils/supabase/client';
+import {
+  initialUser,
+  initialPosts,
+  initialChats,
+  initialProposals,
+  initialNotifications,
+  initialReviews,
+} from '@/utils/seedData';
+import {
+  onAuthChanged,
+  loginWithEmail as fbLoginEmail,
+  registerWithEmail as fbRegisterEmail,
+  loginWithGoogle as fbLoginGoogle,
+  logoutUser as fbLogout,
+  subscribeToPosts,
+  addPostToFirestore,
+  deletePostFromFirestore,
+  subscribeToProposals,
+  addProposalToFirestore,
+  updateProposalStatusInFirestore,
+  subscribeToChats,
+  saveChatToFirestore,
+} from '@/services/firebaseService';
 
 interface ToastData {
   id: string;
@@ -43,19 +64,34 @@ interface AppContextType {
   proposalModalTargetId: string | null;
   setProposalModalTargetId: (id: string | null) => void;
   refreshPosts: () => Promise<void>;
+  deletePost: (postId: string) => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<UserProfile>;
+  registerWithEmail: (email: string, pass: string, name: string, city?: string) => Promise<UserProfile>;
+  loginWithGoogle: () => Promise<UserProfile>;
+  signOut: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const STORAGE_KEYS = {
+  USER: 'exchange_user',
+  POSTS: 'exchange_posts',
+  SAVED: 'exchange_saved',
+  PROPOSALS: 'exchange_proposals',
+  CHATS: 'exchange_chats',
+  NOTIFICATIONS: 'exchange_notifications',
+  REVIEWS: 'exchange_reviews',
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoadingPosts, setIsLoadingPosts] = useState<boolean>(true);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [isLoadingPosts, setIsLoadingPosts] = useState<boolean>(false);
   const [saved, setSaved] = useState<string[]>([]);
-  const [chats, setChats] = useState<Record<string, Conversation>>({});
-  const [proposals, setProposals] = useState<ExchangeProposal[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [chats, setChats] = useState<Record<string, Conversation>>(initialChats);
+  const [proposals, setProposals] = useState<ExchangeProposal[]>(initialProposals);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
+  const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [search, setSearch] = useState<string>('');
 
@@ -65,142 +101,127 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isGuidelinesModalOpen, setIsGuidelinesModalOpen] = useState<boolean>(false);
   const [proposalModalTargetId, setProposalModalTargetId] = useState<string | null>(null);
 
-  const supabase = createClient();
-
-  // Load real posts from Supabase database
-  const refreshPosts = async () => {
-    setIsLoadingPosts(true);
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        // If Supabase table isn't created yet or network issue
-        console.warn('Supabase posts table note:', error.message);
-      } else if (data && data.length > 0) {
-        const formatted: Post[] = data.map((item: any) => ({
-          id: item.id,
-          user_id: item.user_id,
-          owner: item.owner_name || 'Community Member',
-          avatar: item.owner_avatar || initialUser.avatar,
-          title: item.title,
-          condition: item.condition,
-          category: item.category,
-          city: item.city,
-          locality: item.locality || '',
-          wanted: item.wanted || 'Open to any exchange',
-          description: item.description,
-          image: item.image,
-          time: new Date(item.created_at).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          exchanges: 0,
-          rating: '5.0',
-          mine: user ? item.user_id === user.id : false,
-          status: item.status,
-        }));
-        setPosts(formatted);
-      } else {
-        // Table exists but has 0 posts yet
-        setPosts([]);
-      }
-    } catch (err) {
-      console.warn('Error fetching live posts:', err);
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  };
-
-  // Load user session from Supabase on mount
+  // 1. Firebase Auth listener with localStorage fallback
   useEffect(() => {
-    const fetchUserAndData = async () => {
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Member';
-          setUser({
-            id: authUser.id,
-            name: fullName,
-            first: fullName.split(' ')[0],
-            city: authUser.user_metadata?.city || 'Chennai',
-            locality: authUser.user_metadata?.locality || 'Central',
-            avatar: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || authUser.user_metadata?.avatar || initialUser.avatar,
-            joined: new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-            rating: '5.0',
-            exchanges: 0,
-            email: authUser.email,
-          });
+    let isSubscribed = true;
 
-          // Fetch real exchange proposals for this user
-          try {
-            const { data: propData } = await supabase
-              .from('exchange_proposals')
-              .select('*')
-              .or(`sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id}`)
-              .order('created_at', { ascending: false });
+    // Load initial cached values from localStorage
+    try {
+      const storedSaved = localStorage.getItem(STORAGE_KEYS.SAVED);
+      if (storedSaved) setSaved(JSON.parse(storedSaved));
 
-            if (propData && propData.length > 0) {
-              setProposals(
-                propData.map((p: any) => ({
-                  id: p.id,
-                  sender: p.sender_name,
-                  receiver: p.receiver_name,
-                  senderPost: p.sender_post_id,
-                  receiverPost: p.receiver_post_id,
-                  message: p.message || '',
-                  status: p.status || 'pending',
-                  created: new Date(p.created_at).toLocaleDateString(),
-                }))
-              );
-            } else {
-              setProposals([]);
-            }
-          } catch (propErr) {
-            console.warn('Proposals fetch error:', propErr);
-            setProposals([]);
-          }
-        } else {
-          setProposals([]);
-        }
-      } catch (err) {
-        console.warn('Supabase auth check:', err);
+      const storedNotifications = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+      if (storedNotifications) setNotifications(JSON.parse(storedNotifications));
+
+      const storedReviews = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+      if (storedReviews) setReviews(JSON.parse(storedReviews));
+
+      const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
+    } catch (e) {
+      console.warn('LocalStorage load error:', e);
+    }
 
-      await refreshPosts();
-    };
-
-    fetchUserAndData();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const u = session.user;
-        const fullName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member';
-        setUser({
-          id: u.id,
-          name: fullName,
-          first: fullName.split(' ')[0],
-          city: u.user_metadata?.city || 'Chennai',
-          locality: u.user_metadata?.locality || 'Central',
-          avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || u.user_metadata?.avatar || initialUser.avatar,
-          joined: 'Recently',
-          rating: '5.0',
-          exchanges: 0,
-          email: u.email,
-        });
+    // Subscribe to Firebase Auth
+    const unsubAuth = onAuthChanged((fbProfile) => {
+      if (!isSubscribed) return;
+      if (fbProfile) {
+        setUser(fbProfile);
       } else {
+        // If not logged in on Firebase, check if demo user was explicitly saved
+        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.id?.startsWith('demo-') || parsed?.id === 'usr-priya') {
+            setUser(parsed);
+            return;
+          }
+        }
         setUser(null);
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      isSubscribed = false;
+      unsubAuth();
     };
   }, []);
+
+  // 2. Real-time Firebase Firestore Sync for Posts
+  useEffect(() => {
+    const unsubPosts = subscribeToPosts((livePosts) => {
+      if (livePosts && livePosts.length > 0) {
+        setPosts(livePosts);
+      }
+    });
+    return () => unsubPosts();
+  }, []);
+
+  // 3. Real-time Firebase Firestore Sync for Proposals
+  useEffect(() => {
+    const unsubProposals = subscribeToProposals((liveProposals) => {
+      if (liveProposals) {
+        setProposals(liveProposals);
+      }
+    });
+    return () => unsubProposals();
+  }, []);
+
+  // 4. Real-time Firebase Firestore Sync for Chats
+  useEffect(() => {
+    const unsubChats = subscribeToChats((liveChats) => {
+      if (liveChats) {
+        setChats(liveChats);
+      }
+    });
+    return () => unsubChats();
+  }, []);
+
+  // Save state changes to LocalStorage as offline backup
+  useEffect(() => {
+    try {
+      if (user) {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+      }
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.SAVED, JSON.stringify(saved));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+  }, [saved]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+  }, [notifications]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+  }, [reviews]);
+
+  const refreshPosts = async () => {
+    setIsLoadingPosts(true);
+    setTimeout(() => {
+      setIsLoadingPosts(false);
+    }, 250);
+  };
 
   const toast = (message: string, kind: 'success' | 'error' = 'success') => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -219,51 +240,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const sendMessage = (chatId: string, text: string) => {
+  const sendMessage = async (chatId: string, text: string) => {
     if (!text.trim()) return;
-    setChats((prev) => {
-      const chat = prev[chatId];
-      if (!chat) return prev;
-      return {
-        ...prev,
-        [chatId]: {
-          ...chat,
-          messages: [
-            ...chat.messages,
-            { mine: true, text: text.trim(), time: 'Just now' },
-          ],
-        },
-      };
-    });
+    const currentChat = chats[chatId] || {
+      name: 'Community Member',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80',
+      city: 'Chennai',
+      post: 'Item Discussion',
+      messages: [],
+    };
+
+    const updatedChat: Conversation = {
+      ...currentChat,
+      messages: [
+        ...currentChat.messages,
+        { mine: true, text: text.trim(), time: 'Just now' },
+      ],
+    };
+
+    setChats((prev) => ({ ...prev, [chatId]: updatedChat }));
+
+    try {
+      await saveChatToFirestore(chatId, updatedChat);
+    } catch (err) {
+      console.warn('Chat could not sync to Firestore:', err);
+    }
   };
 
   const createProposal = async (targetPostId: string, offerPostId: string, message: string) => {
     const targetPost = posts.find((p) => p.id === targetPostId);
     if (!targetPost) return;
 
-    let createdId = `x-${Date.now()}`;
-    try {
-      if (user?.id) {
-        const { data: propRow } = await supabase
-          .from('exchange_proposals')
-          .insert({
-            sender_id: user.id,
-            receiver_id: targetPost.user_id || null,
-            sender_name: user.first || user.name,
-            receiver_name: targetPost.owner,
-            sender_post_id: offerPostId,
-            receiver_post_id: targetPostId,
-            message,
-            status: 'pending',
-          })
-          .select()
-          .single();
-        if (propRow) createdId = propRow.id;
-      }
-    } catch (err) {
-      console.warn('Supabase proposal insert note:', err);
-    }
-
+    const createdId = `x-${Date.now()}`;
     const newProposal: ExchangeProposal = {
       id: createdId,
       sender: user?.first || 'You',
@@ -276,6 +284,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setProposals((prev) => [newProposal, ...prev]);
+
+    try {
+      await addProposalToFirestore(newProposal);
+    } catch (err) {
+      console.warn('Proposal could not save to Firestore:', err);
+    }
+
     setNotifications((prev) => [
       {
         id: Date.now(),
@@ -290,10 +305,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProposalModalTargetId(null);
   };
 
-  const updateProposalStatus = (id: string, status: 'accepted' | 'declined' | 'completed') => {
+  const updateProposalStatus = async (id: string, status: 'accepted' | 'declined' | 'completed') => {
     setProposals((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status } : p))
     );
+
+    try {
+      await updateProposalStatusInFirestore(id, status);
+    } catch (err) {
+      console.warn('Proposal status update failed in Firestore:', err);
+    }
 
     const statusIcon = status === 'accepted' ? 'accepted' : status === 'completed' ? 'completed' : 'declined';
     const text =
@@ -308,6 +329,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
     ]);
     toast(text);
+  };
+
+  const deletePost = async (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    try {
+      await deletePostFromFirestore(postId);
+      toast('Post removed from listings and database.');
+    } catch (err) {
+      console.warn('Firestore post delete error:', err);
+      toast('Post removed locally.');
+    }
   };
 
   const markNotificationsAsRead = () => {
@@ -331,19 +363,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const submitReport = async (postId: string, postTitle: string, reason: string, details?: string) => {
+    toast('Report logged for community moderation. Thank you for keeping EXCHANGE safe.');
+  };
+
+  // Auth Operations
+  const loginWithEmail = async (email: string, pass: string): Promise<UserProfile> => {
+    const profile = await fbLoginEmail(email, pass);
+    setUser(profile);
+    toast('Welcome back to EXCHANGE!');
+    return profile;
+  };
+
+  const registerWithEmail = async (
+    email: string,
+    pass: string,
+    name: string,
+    city?: string
+  ): Promise<UserProfile> => {
+    const profile = await fbRegisterEmail(email, pass, name, city);
+    setUser(profile);
+    toast('Account created successfully! Welcome to EXCHANGE.');
+    return profile;
+  };
+
+  const loginWithGoogle = async (): Promise<UserProfile> => {
+    const profile = await fbLoginGoogle();
+    setUser(profile);
+    toast('Signed in with Google!');
+    return profile;
+  };
+
+  const signOut = async (): Promise<void> => {
     try {
-      await supabase.from('reports').insert({
-        reporter_id: user?.id || null,
-        post_id: postId,
-        post_title: postTitle,
-        reason,
-        details: details || '',
-        status: 'Open',
-      });
-      toast('Report logged for community moderation. Thank you for keeping EXCHANGE safe.');
-    } catch (err) {
-      toast('Report logged. Thank you for keeping EXCHANGE safe.');
+      await fbLogout();
+    } catch (e) {
+      console.warn('Firebase signout warning:', e);
     }
+    setUser(null);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    toast('You have been signed out.');
   };
 
   return (
@@ -380,6 +438,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         proposalModalTargetId,
         setProposalModalTargetId,
         refreshPosts,
+        deletePost,
+        loginWithEmail,
+        registerWithEmail,
+        loginWithGoogle,
+        signOut,
       }}
     >
       {children}

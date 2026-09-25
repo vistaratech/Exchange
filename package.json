@@ -2,18 +2,17 @@
   "name": "exchange-barter-mvp",
   "version": "1.0.0",
   "private": true,
-  "description": "A no-price peer-to-peer exchange fullstack app with Next.js and Supabase",
+  "description": "A no-price peer-to-peer exchange fullstack app with Next.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.116.0",
     "@types/node": "^22.20.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "firebase": "^12.19.0",
     "next": "^16.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -1,43 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { createClient } from '@/utils/supabase/client';
 import { initialUser } from '@/utils/seedData';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, setUser, toast } = useApp();
+  const { setUser, toast, loginWithEmail, loginWithGoogle } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (user) {
-      // User already signed in
-    }
-  }, [user]);
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
-      });
-      if (error) {
-        toast(error.message, 'error');
-        setGoogleLoading(false);
-      }
+      await loginWithGoogle();
+      router.push('/profile');
     } catch (err: any) {
-      toast(err.message || 'Google sign-in error', 'error');
+      console.error('Google sign in error:', err);
+      if (err?.code === 'auth/popup-closed-by-user') {
+        toast('Google sign in popup was closed.', 'error');
+      } else {
+        toast(err?.message || 'Google sign in failed.', 'error');
+      }
+    } finally {
       setGoogleLoading(false);
     }
   };
@@ -47,37 +36,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast(error.message, 'error');
-        setLoading(false);
-        return;
-      }
-
-      if (data.user) {
-        const u = data.user;
-        const fullName = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
-        setUser({
-          id: u.id,
-          name: fullName,
-          first: fullName.split(' ')[0],
-          city: u.user_metadata?.city || 'Chennai',
-          locality: u.user_metadata?.locality || 'Central',
-          avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || initialUser.avatar,
-          joined: 'Recently',
-          rating: '5.0',
-          exchanges: 0,
-          email,
-        });
-        toast('Welcome back to EXCHANGE!');
-        router.push('/profile');
-      }
+      await loginWithEmail(email, password);
+      router.push('/profile');
     } catch (err: any) {
-      toast(err.message || 'Authentication error', 'error');
+      console.error('Email sign in error:', err);
+      let msg = err?.message || 'Invalid email or password.';
+      if (err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password' || err?.code === 'auth/user-not-found') {
+        msg = 'Invalid email or password.';
+      }
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }

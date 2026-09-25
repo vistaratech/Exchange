@@ -5,7 +5,8 @@ import { useApp } from '@/context/AppContext';
 import { categories, media, initialUser } from '@/utils/seedData';
 import { LockIcon } from '@/components/Icons';
 import { ItemCondition, Post } from '@/types/exchange';
-import { createClient } from '@/utils/supabase/client';
+
+import { uploadPostImage, addPostToFirestore } from '@/services/firebaseService';
 
 export const CreatePostModal: React.FC = () => {
   const {
@@ -32,8 +33,6 @@ export const CreatePostModal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isCreateModalOpen) return null;
-
-  const supabase = createClient();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,56 +70,14 @@ export const CreatePostModal: React.FC = () => {
     try {
       let finalImageUrl = imagePreview || media.console;
 
-      // 1. If image file exists, attempt upload to Supabase Storage 'post-images' bucket
       if (imageFile) {
-        try {
-          const fileExt = imageFile.name.split('.').pop() || 'jpg';
-          const fileName = `${user.id || 'usr'}-${Date.now()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('post-images')
-            .upload(fileName, imageFile);
-
-          if (!uploadError) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('post-images')
-              .getPublicUrl(fileName);
-            if (publicUrl) {
-              finalImageUrl = publicUrl;
-            }
-          }
-        } catch (storageErr) {
-          console.warn('Supabase storage upload note, using inline image:', storageErr);
-        }
-      }
-
-      // 2. Insert into Supabase 'posts' table
-      const postPayload = {
-        user_id: user.id || null,
-        owner_name: user.name || user.first || 'Community Member',
-        owner_avatar: user.avatar || media.priya,
-        title,
-        condition,
-        category,
-        city,
-        locality,
-        wanted: openToAny ? 'Open to any interesting exchange' : wanted || 'Open to any interesting exchange',
-        description,
-        image: finalImageUrl,
-        status: 'active',
-      };
-
-      const { data, error } = await supabase
-        .from('posts')
-        .insert(postPayload)
-        .select()
-        .single();
-
-      if (error) {
-        console.warn('Database insert note, saving locally:', error.message);
+        toast('Uploading image to Firebase Storage...');
+        finalImageUrl = await uploadPostImage(imageFile);
       }
 
       const newPost: Post = {
-        id: data?.id || `p-${Date.now()}`,
+        id: `p-${Date.now()}`,
+        user_id: user.id,
         owner: user.first || user.name || 'Member',
         avatar: user.avatar || media.priya,
         title,
@@ -138,7 +95,10 @@ export const CreatePostModal: React.FC = () => {
         status: 'active',
       };
 
-      setPosts((prev) => [newPost, ...prev]);
+      // Add to Firestore database
+      await addPostToFirestore(newPost);
+      setPosts((prev) => [newPost, ...prev.filter((p) => p.id !== newPost.id)]);
+
       toast('Your item is live on EXCHANGE!');
       setIsCreateModalOpen(false);
 
@@ -149,11 +109,10 @@ export const CreatePostModal: React.FC = () => {
       setImagePreview('');
       setImageFile(null);
       setAgreedToSafety(false);
-
-      // Refresh live feed
       refreshPosts();
     } catch (err: any) {
-      toast(err.message || 'Error publishing post', 'error');
+      console.error('Error creating post:', err);
+      toast(err?.message || 'Error creating post. Saved locally.', 'error');
     } finally {
       setIsSubmitting(false);
     }

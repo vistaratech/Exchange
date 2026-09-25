@@ -2,11 +2,18 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { createClient } from '@/utils/supabase/client';
 import { initialUser } from '@/utils/seedData';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setIsAuthModalOpen, setUser, toast } = useApp();
+  const {
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    setUser,
+    toast,
+    loginWithEmail,
+    registerWithEmail,
+    loginWithGoogle,
+  } = useApp();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,23 +24,20 @@ export const AuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  const supabase = createClient();
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
-      });
-      if (error) {
-        toast(error.message, 'error');
-        setGoogleLoading(false);
-      }
+      await loginWithGoogle();
+      setIsAuthModalOpen(false);
     } catch (err: any) {
-      toast(err.message || 'Google sign-in error', 'error');
+      console.error('Google sign in error:', err);
+      // If popup closed or blocked, show friendly notification
+      if (err?.code === 'auth/popup-closed-by-user') {
+        toast('Google sign in popup was closed.', 'error');
+      } else {
+        toast(err?.message || 'Google sign in failed.', 'error');
+      }
+    } finally {
       setGoogleLoading(false);
     }
   };
@@ -44,72 +48,27 @@ export const AuthModal: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: name.trim(),
-              city: city.trim() || 'Chennai',
-            },
-          },
-        });
-
-        if (error) {
-          toast(error.message, 'error');
+        if (password.length < 6) {
+          toast('Password should be at least 6 characters.', 'error');
           setLoading(false);
           return;
         }
-
-        if (data.user) {
-          setUser({
-            id: data.user.id,
-            name: name.trim() || email.split('@')[0],
-            first: (name.trim() || email).split(' ')[0],
-            city: city.trim() || 'Chennai',
-            locality: 'Central',
-            avatar: initialUser.avatar,
-            joined: 'Just now',
-            rating: '5.0',
-            exchanges: 0,
-            email,
-          });
-          toast('Account created! Welcome to EXCHANGE.');
-          setIsAuthModalOpen(false);
-        }
+        await registerWithEmail(email, password, name, city);
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          toast(error.message, 'error');
-          setLoading(false);
-          return;
-        }
-
-        if (data.user) {
-          const u = data.user;
-          const fullName = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
-          setUser({
-            id: u.id,
-            name: fullName,
-            first: fullName.split(' ')[0],
-            city: u.user_metadata?.city || 'Chennai',
-            locality: u.user_metadata?.locality || 'Adyar',
-            avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || initialUser.avatar,
-            joined: 'Recently',
-            rating: '5.0',
-            exchanges: 0,
-            email,
-          });
-          toast('Welcome back to EXCHANGE.');
-          setIsAuthModalOpen(false);
-        }
+        await loginWithEmail(email, password);
       }
+      setIsAuthModalOpen(false);
     } catch (err: any) {
-      toast(err.message || 'Authentication error', 'error');
+      console.error('Auth error:', err);
+      let msg = err?.message || 'Authentication failed.';
+      if (err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password') {
+        msg = 'Invalid email or password.';
+      } else if (err?.code === 'auth/email-already-in-use') {
+        msg = 'An account with this email already exists. Try signing in.';
+      } else if (err?.code === 'auth/weak-password') {
+        msg = 'Password is too weak (min 6 characters).';
+      }
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }
