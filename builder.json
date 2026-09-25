@@ -1,0 +1,18 @@
+{
+  "project": "exchange-mvp",
+  "platform": "ios",
+  "github": {
+    "owner": "vistaratech",
+    "repo": "Exchange"
+  },
+  "ios": {
+    "path": "ios/App",
+    "scheme": "App"
+  },
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {},
+  "kmp": {},
+  "mobai": {}
+}
