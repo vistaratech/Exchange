@@ -36,7 +36,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
 
   return (
     <article className="item-card">
-      <Link href={`/post/${post.id}`} className="item-image-wrap">
+      <Link href={`/post?id=${post.id}`} className="item-image-wrap">
         <img
           className="item-image"
           src={post.image}
@@ -61,7 +61,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
 
       <div className="item-content">
         <div className="item-title-row">
-          <Link href={`/post/${post.id}`} className="item-title">
+          <Link href={`/post?id=${post.id}`} className="item-title">
             {post.title}
           </Link>
         </div>

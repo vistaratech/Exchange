@@ -1,0 +1,33 @@
+{
+  "name": "EXCHANGE — Barter Marketplace",
+  "short_name": "EXCHANGE",
+  "description": "Item-to-item barter community. No money. No fees. Just direct exchange.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f372d",
+  "theme_color": "#0f372d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "productivity"],
+  "screenshots": []
+}

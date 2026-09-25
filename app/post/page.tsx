@@ -1,20 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { LocationIcon, ExchangeIcon, StarIcon } from '@/components/Icons';
 
-export default function PostDetailPage() {
-  const params = useParams();
+function PostDetailContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { posts, setProposalModalTargetId, toast, user } = useApp();
 
-  const postId = params.id as string;
+  const postId = searchParams.get('id');
   const post = posts.find((p) => p.id === postId);
 
-  const [activeImage, setActiveImage] = useState<string>(post?.image || '');
+  const [activeImage, setActiveImage] = useState<string>('');
 
   if (!post) {
     return (
@@ -30,6 +30,7 @@ export default function PostDetailPage() {
     );
   }
 
+  const currentImg = activeImage || post.image;
   const gallery = [post.image, post.image];
   const isMine = post.mine || post.owner === user?.first;
 
@@ -60,7 +61,7 @@ export default function PostDetailPage() {
           <img
             className="detail-image"
             id="detail-image"
-            src={activeImage || post.image}
+            src={currentImg}
             alt={post.title}
           />
 
@@ -68,7 +69,7 @@ export default function PostDetailPage() {
             {gallery.map((src, i) => (
               <img
                 key={i}
-                className={`thumb ${(activeImage || post.image) === src ? 'active' : ''}`}
+                className={`thumb ${currentImg === src ? 'active' : ''}`}
                 src={src}
                 alt={`${post.title} view ${i + 1}`}
                 onClick={() => setActiveImage(src)}
@@ -107,7 +108,7 @@ export default function PostDetailPage() {
           </div>
 
           <div className="wanted">
-            <small>They’re looking for</small>
+            <small>They're looking for</small>
             <b>{post.wanted}</b>
           </div>
 
@@ -154,5 +155,13 @@ export default function PostDetailPage() {
         </aside>
       </section>
     </main>
+  );
+}
+
+export default function PostPage() {
+  return (
+    <Suspense fallback={<main className="shell"><div className="empty">Loading...</div></main>}>
+      <PostDetailContent />
+    </Suspense>
   );
 }
