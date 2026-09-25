@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { initialUser } from '@/utils/seedData';
+import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function RegisterPage() {
   const [city, setCity] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreedToSafety, setAgreedToSafety] = useState(true);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -38,6 +40,11 @@ export default function RegisterPage() {
 
     if (password.length < 6) {
       toast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+
+    if (!agreedToSafety) {
+      toast('Please agree to the barter community pledge.', 'error');
       return;
     }
 
@@ -107,7 +114,7 @@ export default function RegisterPage() {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
             />
           </svg>
-          {googleLoading ? 'Redirecting to Google…' : 'Sign up with Google'}
+          {googleLoading ? 'Connecting to Google…' : 'Sign up with Google'}
         </button>
 
         <div className="auth-divider">
@@ -151,16 +158,41 @@ export default function RegisterPage() {
           </div>
 
           <div className="form-row">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              required
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ margin: 0 }}>Password</label>
+              <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Min 6 characters</span>
+            </div>
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Create a strong password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+              </button>
+            </div>
           </div>
+
+          <label className="check" style={{ marginTop: 4, alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              checked={agreedToSafety}
+              onChange={(e) => setAgreedToSafety(e.target.checked)}
+              style={{ marginTop: 3 }}
+            />
+            <span style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.4 }}>
+              I agree to the Community Safety Pledge to describe items truthfully and meet in public places.
+            </span>
+          </label>
 
           <button
             type="submit"

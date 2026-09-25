@@ -5,14 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { initialUser } from '@/utils/seedData';
+import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, toast, loginWithEmail, loginWithGoogle } = useApp();
+  const { setUser, toast, loginWithEmail, loginWithGoogle, resetPassword } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -41,12 +44,31 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error('Email sign in error:', err);
       let msg = err?.message || 'Invalid email or password.';
-      if (err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password' || err?.code === 'auth/user-not-found') {
+      if (
+        err?.code === 'auth/invalid-credential' ||
+        err?.code === 'auth/wrong-password' ||
+        err?.code === 'auth/user-not-found'
+      ) {
         msg = 'Invalid email or password.';
       }
       toast(msg, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast('Please enter your email above first.', 'error');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await resetPassword(email.trim());
+    } catch (err: any) {
+      toast(err?.message || 'Could not send reset email.', 'error');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -103,7 +125,7 @@ export default function LoginPage() {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
             />
           </svg>
-          {googleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
+          {googleLoading ? 'Connecting to Google…' : 'Continue with Google'}
         </button>
 
         <div className="auth-divider">
@@ -123,14 +145,42 @@ export default function LoginPage() {
           </div>
 
           <div className="form-row">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Your account password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ margin: 0 }}>Password</label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                style={{
+                  background: 'none',
+                  border: 0,
+                  padding: 0,
+                  fontSize: 12,
+                  color: 'var(--pine)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {resetLoading ? 'Sending…' : 'Forgot password?'}
+              </button>
+            </div>
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Your account password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

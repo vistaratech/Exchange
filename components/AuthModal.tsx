@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { initialUser } from '@/utils/seedData';
+import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -13,14 +14,17 @@ export const AuthModal: React.FC = () => {
     loginWithEmail,
     registerWithEmail,
     loginWithGoogle,
+    resetPassword,
   } = useApp();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
@@ -31,7 +35,6 @@ export const AuthModal: React.FC = () => {
       setIsAuthModalOpen(false);
     } catch (err: any) {
       console.error('Google sign in error:', err);
-      // If popup closed or blocked, show friendly notification
       if (err?.code === 'auth/popup-closed-by-user') {
         toast('Google sign in popup was closed.', 'error');
       } else {
@@ -71,6 +74,21 @@ export const AuthModal: React.FC = () => {
       toast(msg, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast('Please type your email address first.', 'error');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await resetPassword(email.trim());
+    } catch (err: any) {
+      toast(err?.message || 'Could not send reset email.', 'error');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -142,7 +160,7 @@ export const AuthModal: React.FC = () => {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
             />
           </svg>
-          {googleLoading ? 'Redirecting to Google…' : isSignUp ? 'Sign up with Google' : 'Continue with Google'}
+          {googleLoading ? 'Connecting to Google…' : isSignUp ? 'Sign up with Google' : 'Continue with Google'}
         </button>
 
         <div className="auth-divider">
@@ -188,30 +206,65 @@ export const AuthModal: React.FC = () => {
           </div>
 
           <div className="form-row">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              required
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ margin: 0 }}>Password</label>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  style={{
+                    background: 'none',
+                    border: 0,
+                    padding: 0,
+                    fontSize: 12,
+                    color: 'var(--pine)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  {resetLoading ? 'Sending…' : 'Forgot?'}
+                </button>
+              )}
+            </div>
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="At least 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+              </button>
+            </div>
           </div>
 
-          <div className="modal-actions" style={{ marginTop: 14 }}>
-            <button
-              type="button"
-              className="btn btn-quiet"
-              onClick={handleDemo}
-            >
-              Demo Preview
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ width: '100%', marginTop: 8 }}
+            disabled={loading}
+          >
+            {loading ? 'Processing…' : isSignUp ? 'Create Free Account' : 'Sign In'}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-quiet"
+            style={{ width: '100%' }}
+            onClick={handleDemo}
+          >
+            Quick Demo Preview
+          </button>
         </form>
       </div>
     </div>

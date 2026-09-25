@@ -298,10 +298,188 @@ a { color: inherit; text-decoration: none; }
 .notification p { margin: 0; font-size: 13px; }
 .notification small { color: var(--ink-soft); }
 
-.settings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.settings-group { padding: 19px; background: #fff; border: 1px solid var(--line); border-radius: 17px; }
-.settings-group h3 { margin: 0 0 13px; }
-.settings-group p { color: var(--ink-soft); font-size: 13px; margin: 4px 0; }
+/* Settings Page Launch Stage Styles */
+.settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.settings-group {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(11, 40, 32, 0.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.settings-group:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(11, 40, 32, 0.06);
+}
+.settings-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.settings-group-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 750;
+  color: var(--pine-deep);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-group p {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  margin: 4px 0 12px;
+  line-height: 1.45;
+}
+
+/* Avatar Selection Grid */
+.avatar-selection-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--mist);
+  border-radius: 16px;
+}
+.current-avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+.avatar-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.avatar-preset-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.15s ease;
+  background: white;
+}
+.avatar-preset-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-preset-btn:hover {
+  transform: scale(1.1);
+}
+.avatar-preset-btn.selected {
+  border-color: var(--pine);
+  box-shadow: 0 0 0 2px rgba(27, 85, 71, 0.35);
+  transform: scale(1.12);
+}
+
+/* Toggle Switch */
+.settings-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.settings-switch-row:last-child {
+  border-bottom: 0;
+}
+.settings-switch-info b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.settings-switch-info span {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.switch-toggle {
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 99px;
+  border: 0;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+.switch-toggle.on {
+  background: var(--pine);
+}
+.switch-circle {
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: block;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.switch-toggle.on .switch-circle {
+  transform: translateX(20px);
+}
+
+/* Verified Badge */
+.verified-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+
+/* Password Toggle Eye Button inside Input */
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-wrap input {
+  width: 100%;
+  padding-right: 42px !important;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: 0;
+  padding: 4px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+.password-toggle-btn:hover {
+  color: var(--pine-deep);
+}
+
 
 .admin-shell { display: grid; grid-template-columns: 210px 1fr; gap: 26px; }
 .admin-side { background: var(--pine-deep); color: #d4e5dc; border-radius: 20px; padding: 18px; min-height: 500px; }

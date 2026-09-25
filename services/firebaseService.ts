@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
@@ -83,6 +84,33 @@ export async function loginWithGoogle(): Promise<UserProfile> {
 
 export async function logoutUser(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+export async function resetUserPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
+}
+
+export async function updateUserProfileInFirestore(
+  uid: string,
+  updatedData: Partial<UserProfile>
+): Promise<void> {
+  if (auth.currentUser && updatedData.name) {
+    try {
+      await updateProfile(auth.currentUser, {
+        displayName: updatedData.name,
+        photoURL: updatedData.avatar || auth.currentUser.photoURL,
+      });
+    } catch (e) {
+      console.warn('Auth profile update error:', e);
+    }
+  }
+
+  try {
+    const userDocRef = doc(db, 'users', uid);
+    await setDoc(userDocRef, updatedData, { merge: true });
+  } catch (e) {
+    console.warn('Firestore user profile update error:', e);
+  }
 }
 
 export async function getUserProfileOrCreate(u: FirebaseUser): Promise<UserProfile> {

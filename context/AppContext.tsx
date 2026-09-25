@@ -24,6 +24,8 @@ import {
   updateProposalStatusInFirestore,
   subscribeToChats,
   saveChatToFirestore,
+  updateUserProfileInFirestore,
+  resetUserPassword,
 } from '@/services/firebaseService';
 
 interface ToastData {
@@ -69,6 +71,8 @@ interface AppContextType {
   registerWithEmail: (email: string, pass: string, name: string, city?: string) => Promise<UserProfile>;
   loginWithGoogle: () => Promise<UserProfile>;
   signOut: () => Promise<void>;
+  updateProfileData: (data: Partial<UserProfile>) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -404,6 +408,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toast('You have been signed out.');
   };
 
+  const updateProfileData = async (data: Partial<UserProfile>): Promise<void> => {
+    if (!user) return;
+    const updated = { ...user, ...data };
+    setUser(updated);
+    try {
+      if (user.id) {
+        await updateUserProfileInFirestore(user.id, data);
+      }
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+      toast('Profile updated successfully!');
+    } catch (err: any) {
+      console.warn('Profile update error:', err);
+      toast('Profile saved locally.', 'success');
+    }
+  };
+
+  const resetPassword = async (email: string): Promise<void> => {
+    if (!email.trim()) {
+      toast('Please enter your email address.', 'error');
+      return;
+    }
+    await resetUserPassword(email.trim());
+    toast('Password reset link sent to your email.');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -443,6 +472,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         registerWithEmail,
         loginWithGoogle,
         signOut,
+        updateProfileData,
+        resetPassword,
       }}
     >
       {children}
