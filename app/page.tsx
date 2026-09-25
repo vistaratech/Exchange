@@ -3,11 +3,9 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { categories } from '@/utils/seedData';
 import { ItemCard } from '@/components/ItemCard';
-import { ShieldIcon, SearchIcon, PlusIcon, getCategoryIcon } from '@/components/Icons';
-import { BarterHeroArena } from '@/components/BarterHeroArena';
-import { HowItWorksAnimated } from '@/components/HowItWorksAnimated';
+import { MarketplaceBanner } from '@/components/MarketplaceBanner';
+import { categories } from '@/utils/seedData';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -61,34 +59,6 @@ function HomeContent() {
     return matchSearch && matchCategory && matchCity && matchCondition && matchAny;
   });
 
-  const handleCategoryClick = (name: string) => {
-    const nextCategory = selectedCategory.toLowerCase() === name.toLowerCase() ? '' : name;
-    setSelectedCategory(nextCategory);
-
-    // If user clicks a category, smoothly scroll to feed so they see the filtered list immediately
-    if (nextCategory) {
-      setTimeout(() => {
-        const feedEl = document.getElementById('feed');
-        if (feedEl) {
-          feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
-    }
-  };
-
-  const handleFindMatch = (haveText: string, wantText: string) => {
-    const query = [haveText, wantText].filter(Boolean).join(' ');
-    if (query) {
-      setSearch(query);
-    }
-    setTimeout(() => {
-      const feedEl = document.getElementById('feed');
-      if (feedEl) {
-        feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 60);
-  };
-
   const clearFilters = () => {
     setSearch('');
     setSelectedCategory('');
@@ -97,247 +67,109 @@ function HomeContent() {
     setOpenToAny(false);
   };
 
+  const hasActiveFilters = Boolean(
+    selectedCategory || selectedCity || selectedCondition || openToAny || search
+  );
+
   return (
-    <main className="shell">
-      {/* ── HIGH-IMPACT 3D BARTER HERO ARENA & SIMULATOR ── */}
-      <BarterHeroArena
+    <main className="marketplace-shell">
+      {/* ── TOP MOBILE-FIRST MARKETPLACE BANNER & SEARCH & CATEGORIES ── */}
+      <MarketplaceBanner
         onPostClick={() => setIsCreateModalOpen(true)}
         onSafetyClick={() => setIsSafetyModalOpen(true)}
-        onFindMatch={handleFindMatch}
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+        search={search}
+        onSearchChange={setSearch}
       />
 
-      {/* Mobile Search Bar */}
-      <div className="mobile-search-bar">
-        <span><SearchIcon size={16} /></span>
-        <input
-          type="search"
-          placeholder="Search items, categories, or cities…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {search && (
-          <button type="button" onClick={() => setSearch('')} aria-label="Clear search">
-            ×
-          </button>
-        )}
-      </div>
-
-      {/* Trust & Safety Advisory Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, rgba(239,246,230,0.85), rgba(232,242,219,0.85))',
-          backdropFilter: 'blur(8px)',
-          border: '1.5px solid rgba(168,224,99,0.25)',
-          borderRadius: 18,
-          padding: '14px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-          margin: '18px 0',
-          boxShadow: '0 2px 12px rgba(26,107,86,0.04)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(26,107,86,0.08)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-            <ShieldIcon size={18} color="var(--pine)" />
-          </div>
-          <span style={{ fontSize: 13, color: 'var(--pine-deep)', fontWeight: 600, lineHeight: 1.4 }}>
-            100% No-Price Barter · Always meet in public daylight · Never send money
+      {/* ── CLEAN FILTER STRIP ── */}
+      <section className="marketplace-filter-toolbar" id="feed">
+        <div className="filter-toolbar-left">
+          <span className="results-count">
+            <b>{filteredPosts.length}</b> {filteredPosts.length === 1 ? 'item available' : 'items available to swap'}
+            {selectedCategory && <span className="cat-badge">in {selectedCategory}</span>}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsSafetyModalOpen(true)}
-          className="btn btn-small"
-          style={{
-            background: 'rgba(26,107,86,0.08)',
-            color: 'var(--pine)',
-            fontWeight: 700,
-            fontSize: 12,
-            padding: '7px 14px',
-            border: '1px solid rgba(26,107,86,0.12)',
-          }}
-        >
-          Safety Rules →
-        </button>
-      </div>
 
-      {/* Categories Section */}
-      <section className="section" id="categories">
-        <div className="section-heading">
-          <h2>Browse by category</h2>
-          {selectedCategory && (
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('')}
-              style={{ color: 'var(--pine)', fontSize: 13 }}
-            >
-              Clear category ({selectedCategory}) ×
+        <div className="filter-toolbar-right">
+          {/* City select */}
+          <select
+            className="filter-select"
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+          >
+            <option value="">📍 All Cities</option>
+            {[
+              'Chennai',
+              'Bangalore',
+              'Hyderabad',
+              'Mumbai',
+              'Delhi',
+              'Kochi',
+              'Coimbatore',
+              'Pune',
+              'Madurai',
+            ].map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          {/* Condition select */}
+          <select
+            className="filter-select"
+            value={selectedCondition}
+            onChange={(e) => setSelectedCondition(e.target.value)}
+          >
+            <option value="">Condition: Any</option>
+            <option value="Brand New">Brand New</option>
+            <option value="Like New">Like New</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+          </select>
+
+          {/* Open to any checkbox pill */}
+          <button
+            type="button"
+            className={`filter-pill-btn ${openToAny ? 'active' : ''}`}
+            onClick={() => setOpenToAny(!openToAny)}
+          >
+            {openToAny ? '✓ Open to any' : '+ Open to any'}
+          </button>
+
+          {hasActiveFilters && (
+            <button type="button" className="filter-reset-link" onClick={clearFilters}>
+              Reset
             </button>
           )}
-        </div>
-        <div className="categories">
-          {categories.map(([name, icon]) => {
-            const isSelected = selectedCategory.toLowerCase() === name.toLowerCase();
-            return (
-              <button
-                key={name}
-                type="button"
-                className={`category ${isSelected ? 'selected' : ''}`}
-                onClick={() => handleCategoryClick(name)}
-                aria-pressed={isSelected}
-              >
-                <i className="category-icon">{getCategoryIcon(name, 22)}</i>
-                <span>{name}</span>
-              </button>
-            );
-          })}
         </div>
       </section>
 
-      {/* ── INTERACTIVE 3-STEP BARTER GUIDE ── */}
-      <HowItWorksAnimated />
-
-      {/* Main Feed with Filters */}
-      <section className="section" id="feed">
-        <div className="section-heading">
-          <h2>
-            {selectedCategory
-              ? `${selectedCategory} (${filteredPosts.length})`
-              : search
-              ? `Search results for “${search}” (${filteredPosts.length})`
-              : 'Live Community Exchanges'}
-          </h2>
-          {(selectedCategory || selectedCity || selectedCondition || openToAny || search) && (
-            <button type="button" onClick={clearFilters}>
-              Reset all filters
-            </button>
-          )}
-        </div>
-
-        <div className="feed-layout">
-          {/* Filters Sidebar */}
-          <aside className="filters">
-            <h3>Filter exchanges</h3>
-
-            <div className="filter-group">
-              <label>Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">All categories</option>
-                {categories.map(([n]) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Location</label>
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-              >
-                <option value="">Anywhere in India</option>
-                {[
-                  'Chennai',
-                  'Bangalore',
-                  'Hyderabad',
-                  'Mumbai',
-                  'Delhi',
-                  'Kochi',
-                  'Pune',
-                  'Coimbatore',
-                  'Madurai',
-                ].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Condition</label>
-              <select
-                value={selectedCondition}
-                onChange={(e) => setSelectedCondition(e.target.value)}
-              >
-                <option value="">Any condition</option>
-                {['New', 'Like New', 'Good', 'Fair'].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={openToAny}
-                  onChange={(e) => setOpenToAny(e.target.checked)}
-                />
-                Open to any exchange
-              </label>
-            </div>
-          </aside>
-
-          {/* Posts Grid */}
-          <div>
-            {isLoadingPosts ? (
-              <div className="empty" style={{ padding: '60px 20px' }}>
-                <b>Loading community items…</b>
-                <span>Connecting to exchange feed.</span>
-              </div>
-            ) : filteredPosts.length > 0 ? (
-              <div className="item-grid">
-                {filteredPosts.map((post) => (
-                  <ItemCard key={post.id} post={post} />
-                ))}
-              </div>
-            ) : (
-              <div className="empty">
-                <b>Be the first to post an item!</b>
-                <p style={{ maxWidth: 440, margin: '8px auto 16px', fontSize: 14 }}>
-                  {selectedCategory
-                    ? `No items posted under ${selectedCategory} yet.`
-                    : 'No items matching your search.'}{' '}
-                  Start the circular exchange community in your city by posting what you have!
-                </p>
-                <div
-                  className="inline-actions"
-                  style={{ justifyContent: 'center' }}
-                >
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setIsCreateModalOpen(true)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <PlusIcon size={16} />
-                    <span>Post an item now</span>
-                  </button>
-                  {(selectedCategory || selectedCity || search) && (
-                    <button
-                      type="button"
-                      className="btn btn-quiet"
-                      onClick={clearFilters}
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+      {/* ── VINTED / MARKETPLACE ITEM GRID ── */}
+      <section className="marketplace-grid-section">
+        {isLoadingPosts ? (
+          <div className="marketplace-loading">
+            <div className="loading-spinner" />
+            <p>Loading community items...</p>
           </div>
-        </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="marketplace-empty">
+            <div className="empty-icon">🔍</div>
+            <h3>No items found</h3>
+            <p>Try adjusting your search keywords or reset active filters.</p>
+            <button type="button" className="btn-marketplace-primary" onClick={clearFilters}>
+              Clear All Filters
+            </button>
+          </div>
+        ) : (
+          <div className="vinted-grid">
+            {filteredPosts.map((post) => (
+              <ItemCard key={post.id} post={post} />
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );
@@ -345,7 +177,7 @@ function HomeContent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<div className="empty" style={{ margin: '40px auto' }}>Loading feed…</div>}>
+    <Suspense fallback={<div className="shell"><div className="empty">Loading...</div></div>}>
       <HomeContent />
     </Suspense>
   );

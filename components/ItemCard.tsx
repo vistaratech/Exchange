@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types/exchange';
 import { useApp } from '@/context/AppContext';
-import { HeartIcon, LocationIcon, ExchangeIcon } from '@/components/Icons';
+import { HeartIcon, LocationIcon } from '@/components/Icons';
 
 interface ItemCardProps {
   post: Post;
@@ -16,9 +16,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
   const { saved, toggleSave, setProposalModalTargetId, toast, user } = useApp();
   const isSaved = saved.includes(post.id);
 
+  const isMine = post.mine || post.owner === user?.first;
+
   const handleMessage = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (post.mine || post.owner === user?.first) {
+    if (isMine) {
       toast('This is your own post.');
       return;
     }
@@ -26,8 +29,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
   };
 
   const handlePropose = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (post.mine || post.owner === user?.first) {
+    if (isMine) {
       toast('Choose someone else’s post to propose an exchange.');
       return;
     }
@@ -35,89 +39,92 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
   };
 
   return (
-    <article className="item-card enhanced-barter-card">
-      <Link href={`/post?id=${post.id}`} className="item-image-wrap">
-        <img
-          className="item-image"
-          src={post.image}
-          alt={post.title}
-          loading="lazy"
-        />
+    <article className="vinted-card">
+      <Link href={`/post?id=${post.id}`} className="vinted-card-link">
+        {/* Image & Floating Badges */}
+        <div className="vinted-img-wrap">
+          <img
+            src={post.image}
+            alt={post.title}
+            className="vinted-img"
+            loading="lazy"
+          />
 
-        <div className="card-glass-overlay" />
+          {/* Condition Chip */}
+          <span className="vinted-badge-condition">
+            <span className="condition-indicator" />
+            {post.condition}
+          </span>
 
-        <button
-          type="button"
-          className={`save-btn ${isSaved ? 'saved' : ''}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSave(post.id);
-          }}
-          aria-label={isSaved ? 'Remove from saved' : 'Save post'}
-        >
-          <HeartIcon size={16} filled={isSaved} color={isSaved ? '#e04848' : '#1b3b33'} />
-        </button>
+          {/* Save Button */}
+          <button
+            type="button"
+            className={`vinted-save-btn ${isSaved ? 'active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleSave(post.id);
+            }}
+            aria-label={isSaved ? 'Remove from saved' : 'Save post'}
+          >
+            <HeartIcon size={16} filled={isSaved} color={isSaved ? '#ef4444' : '#1e293b'} />
+          </button>
 
-        <span className="condition-chip">
-          <span className="condition-dot" />
-          {post.condition}
-        </span>
-
-        {post.category && (
-          <span className="category-tag-floating">{post.category}</span>
-        )}
-      </Link>
-
-      <div className="item-content">
-        <div className="item-title-row">
-          <Link href={`/post?id=${post.id}`} className="item-title">
-            {post.title}
-          </Link>
+          {/* Category Chip */}
+          {post.category && (
+            <span className="vinted-badge-category">
+              {post.category}
+            </span>
+          )}
         </div>
 
-        {/* ── THEMATIC BARTER BADGE: What they want in return! ── */}
-        <div className="barter-wanted-box">
-          <div className="wanted-header">
-            <span className="swap-icon-tiny">⇄</span>
-            <span>WANTS IN RETURN:</span>
+        {/* Card Body */}
+        <div className="vinted-body">
+          {/* Owner row */}
+          <div className="vinted-owner-row">
+            <img src={post.avatar || '/phone.svg'} alt={post.owner} className="vinted-avatar" />
+            <span className="vinted-owner-name">{post.owner}</span>
+            <span className="vinted-dot">·</span>
+            <span className="vinted-time">{post.time || 'Today'}</span>
           </div>
-          <p className="wanted-text" title={post.wanted || 'Any good trade'}>
-            {post.wanted || 'Open to interesting offers'}
-          </p>
-        </div>
 
-        <div className="item-meta-strip">
-          <div className="item-location">
-            <LocationIcon size={12} color="var(--ink-soft)" />
+          {/* Title */}
+          <h3 className="vinted-title">{post.title}</h3>
+
+          {/* THE SIGNATURE BARTER BADGE: What they want in return */}
+          <div className="vinted-wanted-box">
+            <span className="vinted-swap-icon">⇄</span>
+            <div className="vinted-wanted-text">
+              <span className="vinted-wanted-label">Wants: </span>
+              <b>{post.wanted || 'Open to any item'}</b>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="vinted-location">
+            <LocationIcon size={12} color="#64748b" />
             <span>{post.locality ? `${post.locality}, ${post.city}` : post.city}</span>
           </div>
-          <div className="item-trader-inline">
-            <img src={post.avatar} alt={post.owner} className="trader-avatar-tiny" />
-            <span>{post.owner}</span>
+
+          {/* Quick Action Footer */}
+          <div className="vinted-actions">
+            <button
+              type="button"
+              className="vinted-btn-outline"
+              onClick={handleMessage}
+            >
+              Chat
+            </button>
+            <button
+              type="button"
+              className="vinted-btn-primary"
+              onClick={handlePropose}
+            >
+              Propose Swap
+            </button>
           </div>
         </div>
-
-        <div className="item-actions">
-          <button
-            type="button"
-            className="btn btn-card-msg"
-            onClick={handleMessage}
-            title="Chat with owner"
-          >
-            Message
-          </button>
-          <button
-            type="button"
-            className="btn btn-card-swap"
-            onClick={handlePropose}
-            title="Propose direct item swap"
-          >
-            <span className="swap-arrow-rot">⇄</span>
-            <span>Swap Item</span>
-          </button>
-        </div>
-      </div>
+      </Link>
     </article>
   );
 };
