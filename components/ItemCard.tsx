@@ -35,7 +35,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
   };
 
   return (
-    <article className="item-card">
+    <article className="item-card enhanced-barter-card">
       <Link href={`/post?id=${post.id}`} className="item-image-wrap">
         <img
           className="item-image"
@@ -43,6 +43,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
           alt={post.title}
           loading="lazy"
         />
+
+        <div className="card-glass-overlay" />
+
         <button
           type="button"
           className={`save-btn ${isSaved ? 'saved' : ''}`}
@@ -52,11 +55,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
             toggleSave(post.id);
           }}
           aria-label={isSaved ? 'Remove from saved' : 'Save post'}
-          style={{ display: 'grid', placeItems: 'center' }}
         >
           <HeartIcon size={16} filled={isSaved} color={isSaved ? '#e04848' : '#1b3b33'} />
         </button>
-        <span className="condition-chip">{post.condition}</span>
+
+        <span className="condition-chip">
+          <span className="condition-dot" />
+          {post.condition}
+        </span>
+
+        {post.category && (
+          <span className="category-tag-floating">{post.category}</span>
+        )}
       </Link>
 
       <div className="item-content">
@@ -66,34 +76,45 @@ export const ItemCard: React.FC<ItemCardProps> = ({ post }) => {
           </Link>
         </div>
 
-        <div className="item-location" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <LocationIcon size={12} color="var(--ink-soft)" />
-          <span>{post.locality ? `${post.locality}, ${post.city}` : post.city}</span>
+        {/* ── THEMATIC BARTER BADGE: What they want in return! ── */}
+        <div className="barter-wanted-box">
+          <div className="wanted-header">
+            <span className="swap-icon-tiny">⇄</span>
+            <span>WANTS IN RETURN:</span>
+          </div>
+          <p className="wanted-text" title={post.wanted || 'Any good trade'}>
+            {post.wanted || 'Open to interesting offers'}
+          </p>
         </div>
 
-        <div className="item-owner">
-          {post.owner} · {post.time}
-        </div>
-
-        <div className="exchange-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <ExchangeIcon size={13} color="var(--pine)" />
-          <span>Open to exchange</span>
+        <div className="item-meta-strip">
+          <div className="item-location">
+            <LocationIcon size={12} color="var(--ink-soft)" />
+            <span>{post.locality ? `${post.locality}, ${post.city}` : post.city}</span>
+          </div>
+          <div className="item-trader-inline">
+            <img src={post.avatar} alt={post.owner} className="trader-avatar-tiny" />
+            <span>{post.owner}</span>
+          </div>
         </div>
 
         <div className="item-actions">
           <button
             type="button"
-            className="btn btn-quiet"
+            className="btn btn-card-msg"
             onClick={handleMessage}
+            title="Chat with owner"
           >
             Message
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-card-swap"
             onClick={handlePropose}
+            title="Propose direct item swap"
           >
-            Exchange
+            <span className="swap-arrow-rot">⇄</span>
+            <span>Swap Item</span>
           </button>
         </div>
       </div>

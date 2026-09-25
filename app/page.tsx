@@ -6,6 +6,8 @@ import { useApp } from '@/context/AppContext';
 import { categories } from '@/utils/seedData';
 import { ItemCard } from '@/components/ItemCard';
 import { ShieldIcon, SearchIcon, PlusIcon, getCategoryIcon } from '@/components/Icons';
+import { BarterHeroArena } from '@/components/BarterHeroArena';
+import { HowItWorksAnimated } from '@/components/HowItWorksAnimated';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -74,6 +76,19 @@ function HomeContent() {
     }
   };
 
+  const handleFindMatch = (haveText: string, wantText: string) => {
+    const query = [haveText, wantText].filter(Boolean).join(' ');
+    if (query) {
+      setSearch(query);
+    }
+    setTimeout(() => {
+      const feedEl = document.getElementById('feed');
+      if (feedEl) {
+        feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
   const clearFilters = () => {
     setSearch('');
     setSelectedCategory('');
@@ -84,28 +99,12 @@ function HomeContent() {
 
   return (
     <main className="shell">
-      {/* Home Hero */}
-      <section className="home-hero">
-        <div>
-          <div className="eyebrow">A better kind of peer-to-peer barter</div>
-          <h1>
-            Trade stories,<br />
-            not transactions.
-          </h1>
-          <p>
-            Exchange useful items with people around you — no money, no prices, no checkout.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setIsCreateModalOpen(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
-          <PlusIcon size={16} />
-          <span>Post an item</span>
-        </button>
-      </section>
+      {/* ── HIGH-IMPACT 3D BARTER HERO ARENA & SIMULATOR ── */}
+      <BarterHeroArena
+        onPostClick={() => setIsCreateModalOpen(true)}
+        onSafetyClick={() => setIsSafetyModalOpen(true)}
+        onFindMatch={handleFindMatch}
+      />
 
       {/* Mobile Search Bar */}
       <div className="mobile-search-bar">
@@ -197,6 +196,9 @@ function HomeContent() {
           })}
         </div>
       </section>
+
+      {/* ── INTERACTIVE 3-STEP BARTER GUIDE ── */}
+      <HowItWorksAnimated />
 
       {/* Main Feed with Filters */}
       <section className="section" id="feed">
